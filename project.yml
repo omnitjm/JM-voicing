@@ -1,0 +1,32 @@
+name: JMVoicing
+options:
+  bundleIdPrefix: com.jm.voicing
+  deploymentTarget:
+    macOS: "13.0"
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
+    GENERATE_INFOPLIST_FILE: NO
+targets:
+  JMVoicing:
+    type: application
+    platform: macOS
+    sources:
+      - path: JMVoicing
+        excludes:
+          - "Info.plist"
+          - "JMVoicing.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jm.voicing
+        INFOPLIST_FILE: JMVoicing/Info.plist
+        CODE_SIGN_ENTITLEMENTS: JMVoicing/JMVoicing.entitlements
+        ENABLE_APP_SANDBOX: NO
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
