@@ -28,6 +28,8 @@
     <true/>
     <key>NSMicrophoneUsageDescription</key>
     <string>JM Voicing skal bruge mikrofonen til at diktere det du siger og indsætte det som tekst.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>JM Voicing bruger macOS' Speech Recognition til at omdanne din tale til tekst on-device.</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>JM Voicing skal bruge dette for at indsætte tekst i andre apps.</string>
     <key>NSPrincipalClass</key>

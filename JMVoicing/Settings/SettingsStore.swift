@@ -5,11 +5,11 @@ import Security
 /// Brugerindstillinger. API key gemmes i Keychain, alt andet i UserDefaults.
 final class SettingsStore: ObservableObject {
     private let keychainService = "com.jm.voicing"
-    private let keychainAccount = "openai_api_key"
+    private let anthropicAccount = "anthropic_api_key"
     private let defaults = UserDefaults.standard
 
-    @Published var apiKey: String {
-        didSet { saveApiKey(apiKey) }
+    @Published var anthropicApiKey: String {
+        didSet { saveKeychain(account: anthropicAccount, value: anthropicApiKey) }
     }
 
     @Published var enableGrammarPolish: Bool {
@@ -17,18 +17,18 @@ final class SettingsStore: ObservableObject {
     }
 
     init() {
-        self.apiKey = Self.loadApiKeyStatic(service: "com.jm.voicing", account: "openai_api_key") ?? ""
+        self.anthropicApiKey = Self.loadKeychain(service: "com.jm.voicing", account: "anthropic_api_key") ?? ""
         self.enableGrammarPolish = defaults.object(forKey: "enableGrammarPolish") as? Bool ?? true
     }
 
     // MARK: - Keychain
 
-    private func saveApiKey(_ value: String) {
+    private func saveKeychain(account: String, value: String) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         let baseQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keychainAccount
+            kSecAttrAccount as String: account
         ]
         SecItemDelete(baseQuery as CFDictionary)
         guard !trimmed.isEmpty, let data = trimmed.data(using: .utf8) else { return }
@@ -37,7 +37,7 @@ final class SettingsStore: ObservableObject {
         SecItemAdd(add as CFDictionary, nil)
     }
 
-    private static func loadApiKeyStatic(service: String, account: String) -> String? {
+    private static func loadKeychain(service: String, account: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

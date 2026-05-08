@@ -5,28 +5,30 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("OpenAI API") {
-                SecureField("API key (sk-...)", text: $store.apiKey)
+            Section("Anthropic API key") {
+                SecureField("sk-ant-...", text: $store.anthropicApiKey)
                     .textFieldStyle(.roundedBorder)
-                Text("Bruges til både Whisper-transcription og GPT-grammatik. Hentes på platform.openai.com.")
+                Text("Bruges til at rette grammatik og tilpasse til din tone. Hentes på console.anthropic.com (separat fra Claude Pro/Team subscription).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Section("Behandling") {
                 Toggle("Polér grammatik & tilpas til min tone", isOn: $store.enableGrammarPolish)
-                Text("Fra: ren Whisper-transcription. Til: bliver kørt gennem GPT-4o-mini med din tone-prompt.")
+                Text("Fra: kun rå transcription. Til: bliver kørt gennem Claude med din tone-prompt.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Hotkey") {
-                Text("Hold Fn / Globus for at diktere. Slip for at indsætte teksten ved markøren.")
+            Section("Sådan virker det") {
+                Text("• Tale → tekst sker on-device med macOS' indbyggede Speech Recognition (gratis, virker offline).")
+                Text("• Tekst → poleret tekst sker via Claude API.")
+                Text("• Hold Fn / Globus for at diktere. Slip for at indsætte teksten ved markøren.")
                 Text("Husk: Slå macOS' indbyggede Fn-dictation fra under System Settings → Keyboard.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
         .padding(20)
-        .frame(width: 460)
+        .frame(width: 480)
     }
 }
 

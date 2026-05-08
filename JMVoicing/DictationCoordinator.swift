@@ -17,6 +17,7 @@ final class DictationCoordinator: ObservableObject {
 
     private let settingsStore: SettingsStore
     private let recorder = AudioRecorder()
+    private let speech = NativeSpeechService()
     private var permissionRequested = false
 
     init(settingsStore: SettingsStore) {
@@ -36,9 +37,14 @@ final class DictationCoordinator: ObservableObject {
 
         if !permissionRequested {
             permissionRequested = true
-            let granted = await recorder.requestPermission()
-            if !granted {
+            let mic = await recorder.requestPermission()
+            if !mic {
                 notifyError("Mikrofonadgang er ikke givet. Tildel adgang i System Settings.")
+                return
+            }
+            let speechOK = await NativeSpeechService.requestAuthorization()
+            if !speechOK {
+                notifyError("Speech Recognition er ikke tilladt. Tildel adgang i System Settings → Privacy & Security → Speech Recognition.")
                 return
             }
         }
@@ -62,15 +68,15 @@ final class DictationCoordinator: ObservableObject {
         state = .transcribing
 
         do {
-            let whisper = WhisperService(apiKey: settingsStore.apiKey)
-            let result = try await whisper.transcribe(fileURL: url)
+            let result = try await speech.transcribe(fileURL: url)
             recorder.cleanup(url: url)
 
             var output = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+
             if settingsStore.enableGrammarPolish && !output.isEmpty {
                 state = .processing
-                let grammar = GrammarService(apiKey: settingsStore.apiKey)
-                output = try await grammar.polish(text: output, language: result.language)
+                let claude = ClaudeService(apiKey: settingsStore.anthropicApiKey)
+                output = try await claude.polish(text: output, language: result.language)
             }
 
             if !output.isEmpty {
