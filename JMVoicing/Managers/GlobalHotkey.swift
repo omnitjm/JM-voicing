@@ -4,27 +4,12 @@ import AppKit
 
 /// Registrér globale tastatur-genveje via Carbon's RegisterEventHotKey.
 /// I modsætning til CGEventTap (som vi bruger til Fn) "stjæler" disse genveje
-/// tastetrykket fra andre apps, så ⌃⌥G fx ikke når frem til Slack når vores
+/// tastetrykket fra andre apps, så fx ⌃⌥G ikke når frem til Slack når vores
 /// genvej rammer.
+///
+/// Genveje skal være key+modifier (ikke modifier-only). Ny instans pr. genvej;
+/// deinit unregisterer automatisk.
 final class GlobalHotkey {
-
-    /// macOS virtuelle key codes vi har brug for. Se Carbon/HIToolbox/Events.h.
-    enum KeyCode: UInt32 {
-        case g = 5
-        case a = 0
-        case space = 49
-        case k = 40
-        case f = 3
-    }
-
-    /// Carbon modifier flags - kombinér med OR.
-    struct Modifiers: OptionSet {
-        let rawValue: UInt32
-        static let command = Modifiers(rawValue: UInt32(cmdKey))
-        static let shift   = Modifiers(rawValue: UInt32(shiftKey))
-        static let option  = Modifiers(rawValue: UInt32(optionKey))
-        static let control = Modifiers(rawValue: UInt32(controlKey))
-    }
 
     private static var handlers: [UInt32: () -> Void] = [:]
     private static var nextId: UInt32 = 1
@@ -33,21 +18,35 @@ final class GlobalHotkey {
     private var ref: EventHotKeyRef?
     private let id: UInt32
 
-    init(keyCode: KeyCode, modifiers: Modifiers, handler: @escaping () -> Void) {
+    /// keyCode er en Carbon/NSEvent virtual key code. modifiers er OR'ed Carbon
+    /// modifier-flags (cmdKey, optionKey, controlKey, shiftKey).
+    init?(keyCode: UInt32, modifiers: UInt32, handler: @escaping () -> Void) {
+        guard modifiers != 0 else {
+            print("[GlobalHotkey] Afviser hotkey uden modifier - ville aktivere når du skriver.")
+            return nil
+        }
+
         id = Self.nextId
         Self.nextId += 1
         Self.handlers[id] = handler
         Self.installCarbonHandlerIfNeeded()
 
-        var hotKeyID = EventHotKeyID(signature: Self.signature, id: id)
+        let hotKeyID = EventHotKeyID(signature: Self.signature, id: id)
         var hkRef: EventHotKeyRef?
-        let status = RegisterEventHotKey(keyCode.rawValue, modifiers.rawValue, hotKeyID,
+        let status = RegisterEventHotKey(keyCode, modifiers, hotKeyID,
                                          GetApplicationEventTarget(), 0, &hkRef)
         if status == noErr {
             ref = hkRef
         } else {
-            print("[GlobalHotkey] Kunne ikke registrere hotkey: \(status)")
+            print("[GlobalHotkey] Kunne ikke registrere hotkey (\(keyCode)+\(modifiers)): \(status)")
+            Self.handlers.removeValue(forKey: id)
+            return nil
         }
+    }
+
+    /// Convenience-init med ShortcutSpec.
+    convenience init?(spec: ShortcutSpec, handler: @escaping () -> Void) {
+        self.init(keyCode: spec.keyCode, modifiers: spec.modifiers, handler: handler)
     }
 
     deinit {
@@ -59,8 +58,6 @@ final class GlobalHotkey {
 
     // MARK: - Carbon plumbing
 
-    /// "JMVO" som FourCharCode - bruges som signature så vores hotkey events
-    /// ikke kolliderer med andres på samme proces.
     private static let signature: OSType = {
         let chars: [UInt8] = [0x4A, 0x4D, 0x56, 0x4F] // J M V O
         return OSType(chars[0]) << 24 | OSType(chars[1]) << 16 | OSType(chars[2]) << 8 | OSType(chars[3])

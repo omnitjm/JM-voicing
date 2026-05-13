@@ -27,25 +27,77 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] state in self?.updateStatusIcon(state: state) }
             .store(in: &cancellables)
 
-        // Fn / Globus - push-to-talk dictation
+        // Fn / Globus - push-to-talk dictation. Brugeren kan ændre tasten i Settings.
         hotkeyManager = HotkeyManager(
+            trigger: settingsStore.dictationTrigger,
             onPress: { [weak self] in self?.dictationCoordinator.startRecording() },
             onRelease: { [weak self] in self?.dictationCoordinator.stopAndProcess() }
         )
         hotkeyManager.start()
 
-        // ⌃⌥G - grammar check på markeret tekst
-        grammarHotkey = GlobalHotkey(keyCode: .g, modifiers: [.control, .option]) { [weak self] in
+        registerGrammarHotkey()
+        registerCommandHotkey()
+        observeSettings()
+    }
+
+    // MARK: - Observere settings-ændringer og re-registrere genveje live
+
+    private func observeSettings() {
+        settingsStore.$dictationTrigger
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] new in
+                self?.hotkeyManager.update(trigger: new)
+                self?.refreshMenu()
+            }
+            .store(in: &cancellables)
+
+        settingsStore.$grammarShortcut
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.registerGrammarHotkey()
+                self?.refreshMenu()
+            }
+            .store(in: &cancellables)
+
+        settingsStore.$commandShortcut
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.registerCommandHotkey()
+                self?.refreshMenu()
+            }
+            .store(in: &cancellables)
+    }
+
+    private func registerGrammarHotkey() {
+        grammarHotkey = nil  // unregistrér via deinit
+        guard let spec = settingsStore.grammarShortcut else { return }
+        grammarHotkey = GlobalHotkey(spec: spec) { [weak self] in
             self?.selectionCoordinator.runGrammarCheck()
         }
+    }
 
-        // ⌃⌥A - AI command palette
-        commandHotkey = GlobalHotkey(keyCode: .a, modifiers: [.control, .option]) { [weak self] in
+    private func registerCommandHotkey() {
+        commandHotkey = nil
+        guard let spec = settingsStore.commandShortcut else { return }
+        commandHotkey = GlobalHotkey(spec: spec) { [weak self] in
             self?.selectionCoordinator.runInlineCommand()
         }
     }
 
+    // MARK: - Menu bar
+
     private func configureMenu() {
+        statusItem.menu = buildMenu()
+    }
+
+    private func refreshMenu() {
+        statusItem.menu = buildMenu()
+    }
+
+    private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
         let title = NSMenuItem(title: "JM Voicing", action: nil, keyEquivalent: "")
@@ -53,9 +105,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(title)
         menu.addItem(NSMenuItem.separator())
 
-        addShortcutItem(menu, title: "Hold Fn", subtitle: "diktér og indsæt ved markøren")
-        addShortcutItem(menu, title: "⌃⌥G", subtitle: "tjek grammatik på markeret tekst")
-        addShortcutItem(menu, title: "⌃⌥A", subtitle: "AI-kommando på markeret tekst")
+        addShortcutItem(menu,
+                        keys: "Hold \(settingsStore.dictationTrigger.display)",
+                        subtitle: "diktér og indsæt ved markøren")
+
+        if let g = settingsStore.grammarShortcut {
+            addShortcutItem(menu, keys: g.display, subtitle: "tjek grammatik på markeret tekst")
+        } else {
+            addShortcutItem(menu, keys: "—", subtitle: "grammar-check (slået fra)")
+        }
+
+        if let c = settingsStore.commandShortcut {
+            addShortcutItem(menu, keys: c.display, subtitle: "AI-kommando på markeret tekst")
+        } else {
+            addShortcutItem(menu, keys: "—", subtitle: "AI-kommando (slået fra)")
+        }
 
         menu.addItem(NSMenuItem.separator())
         let settingsItem = NSMenuItem(title: "Indstillinger…", action: #selector(openSettings), keyEquivalent: ",")
@@ -67,12 +131,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quitItem.target = self
         menu.addItem(quitItem)
 
-        statusItem.menu = menu
+        return menu
     }
 
-    private func addShortcutItem(_ menu: NSMenu, title: String, subtitle: String) {
+    private func addShortcutItem(_ menu: NSMenu, keys: String, subtitle: String) {
         let attributed = NSMutableAttributedString(
-            string: "\(title)   ",
+            string: "\(keys)   ",
             attributes: [.font: NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold)]
         )
         attributed.append(NSAttributedString(

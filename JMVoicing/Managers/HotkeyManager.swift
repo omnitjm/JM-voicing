@@ -1,23 +1,35 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// Lytter efter Fn / Globus tasten via en CGEvent tap.
-/// Push-to-talk: kalder onPress når Fn trykkes, onRelease når Fn slippes.
+/// Lytter efter push-to-talk-tasten. Hvilken tast er valgt af brugeren via Settings
+/// (default: Fn). Tasten skal være en modifier-only tast - vi bruger CGEventTap til
+/// at fange den, men "stjæler" den ikke (.listenOnly) så macOS' egne genveje stadig
+/// virker.
 ///
-/// VIGTIGT: Kræver Accessibility-tilladelse i System Settings → Privacy & Security → Accessibility.
-/// VIGTIGT: macOS' indbyggede Fn-dictation skal være slået fra:
-///   System Settings → Keyboard → Press Fn key to: → "Do Nothing"
-///   System Settings → Keyboard → Dictation: Off
+/// VIGTIGT: Kræver Accessibility-tilladelse i System Settings → Privacy & Security
+/// → Accessibility. Hvis brugeren vælger Fn, skal macOS' indbyggede Fn-dictation
+/// også slås fra under System Settings → Keyboard.
 final class HotkeyManager {
     private let onPress: () -> Void
     private let onRelease: () -> Void
+    private var trigger: DictationTrigger
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var fnIsDown = false
+    private var isHeld = false
 
-    init(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) {
+    init(trigger: DictationTrigger,
+         onPress: @escaping () -> Void,
+         onRelease: @escaping () -> Void) {
+        self.trigger = trigger
         self.onPress = onPress
         self.onRelease = onRelease
+    }
+
+    /// Skift hvilken tast vi lytter efter. Nulstiller intern state så vi ikke
+    /// bliver "fastfrosset" hvis brugeren skiftede mens den gamle tast var nede.
+    func update(trigger: DictationTrigger) {
+        self.trigger = trigger
+        self.isHeld = false
     }
 
     func start() {
@@ -53,7 +65,6 @@ final class HotkeyManager {
         self.runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        print("[HotkeyManager] Lytter efter Fn-tast.")
     }
 
     func stop() {
@@ -63,18 +74,24 @@ final class HotkeyManager {
         if let source = runLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
         }
+        eventTap = nil
+        runLoopSource = nil
     }
 
     private func handle(type: CGEventType, event: CGEvent) {
         guard type == .flagsChanged else { return }
-        let flags = event.flags
-        let fnDown = flags.contains(.maskSecondaryFn)
+        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+        guard keyCode == trigger.keyCode else { return }
 
-        if fnDown && !fnIsDown {
-            fnIsDown = true
+        // Toggle - macOS sender præcis ét flagsChanged-event pr. transition for
+        // den specifikke fysiske tast (identificeret af keyCode), så simpel
+        // toggling er nok. Hvis app'en startes mens tasten holdes nede, vil
+        // første event blive tolket som press, men brugeren slipper og holder
+        // igen og alt er fint.
+        isHeld.toggle()
+        if isHeld {
             DispatchQueue.main.async { [weak self] in self?.onPress() }
-        } else if !fnDown && fnIsDown {
-            fnIsDown = false
+        } else {
             DispatchQueue.main.async { [weak self] in self?.onRelease() }
         }
     }
