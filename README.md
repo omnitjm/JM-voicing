@@ -1,123 +1,148 @@
 # JM Voicing
 
-En minimal Mac voice-dictation menu bar app inspireret af [VoiceInk](https://github.com/Beingpax/VoiceInk).
+En personlig macOS menubar-app der gør tre ting via globale genveje:
 
-**Hvad gør den?**
-1. Du holder **Fn / Globus**-tasten nede.
-2. App'en optager mens du taler.
-3. Du slipper tasten.
-4. macOS' indbyggede Speech Recognition omdanner tale til tekst (auto-detekterer dansk eller engelsk).
-5. Claude (Opus 4.7) retter grammatik og tilpasser teksten til **din tone**.
-6. Den polerede tekst indsættes præcis der hvor markøren står - i Slack, Mail, Notes, Cursor, hvor som helst.
+| Genvej | Funktion |
+|---|---|
+| **Hold Fn / 🌐** | **Diktér** - optager mens du holder tasten. Slip → polerede tekst indsættes ved markøren. Auto-detekterer dansk / engelsk. |
+| **⌃⌥G** | **Tjek grammatik** - marker tekst hvor som helst, tryk genvejen, rettet version erstatter den markerede. Ændrer KUN stavefejl og grammatik - ikke tone eller sprog. |
+| **⌃⌥A** | **AI-kommando** - marker tekst (eller intet), tryk genvejen, skriv en kommando i den lille popup. Fx *"svar høfligt nej med disse punkter: ..."* eller *"oversæt til engelsk"*. |
 
-Ingen UI-vinduer i vejen, kun et menubar-ikon (`mic`) der ændrer sig under brug. **Kun én API key** (Anthropic) - resten kører gratis on-device.
+Alt sker via samme Anthropic API key. Dictation kører transcription on-device gratis via macOS' indbyggede Speech Recognition.
 
 ---
 
-## Krav
+## Installer (nem version)
 
-- macOS 13.0 eller nyere
-- Xcode 15+
-- En **Anthropic API key** fra https://console.anthropic.com (kræver et betalingsmiddel - er **ikke** inkluderet i Claude Pro eller Team subscription)
+1. Gå til **[Actions-fanen på GitHub](https://github.com/omnitjm/JM-voicing/actions)** og åbn det seneste grønne "Build .app"-run.
+2. Scroll til "Artifacts" → klik **JMVoicing-app** → en `.zip` downloades.
+3. Unzip → træk `JMVoicing.app` ind i `/Applications`.
+4. Første gang du åbner den: **højre-klik på app'en → Open** (ikke dobbeltklik). macOS spørger om du er sikker - klik Open. Du skal kun gøre det denne ene gang.
+5. App'en lever i menu baren - kig efter et lille mikrofon-ikon 🎤 øverst på skærmen.
 
 ---
 
-## Setup (første gang)
-
-### 1. Generér Xcode-projektet
-
-App'en bruger [XcodeGen](https://github.com/yonaskolb/XcodeGen) til at undgå at vedligeholde `.xcodeproj` i git.
+## Installer (fra source - hvis du vil rette i koden)
 
 ```bash
 brew install xcodegen
-cd path/to/JM-voicing
+git clone https://github.com/omnitjm/JM-voicing.git
+cd JM-voicing
+git checkout claude/voice-dictation-mac-pcebx
 xcodegen generate
 open JMVoicing.xcodeproj
 ```
 
-### 2. Byg og kør
+I Xcode: vælg dit Apple ID som signing team under **Signing & Capabilities**, tryk **⌘R**.
 
-I Xcode: tryk `⌘R`. App'en lukker ikke et vindue op - kig i menu baren for et lille mikrofon-ikon.
+---
+
+## Setup (5 minutter, første gang)
+
+### 1. Anthropic API key
+
+1. Gå til **https://console.anthropic.com**, log ind (eller opret konto - den er separat fra Claude.ai)
+2. Billing → Add payment method → læg fx $5-10 ind
+3. Settings → API keys → Create Key
+4. Kopier nøglen (`sk-ant-...`)
+
+### 2. Indsæt nøglen i JM Voicing
+
+Klik på mikrofon-ikonet i menu baren → **Indstillinger…** → indsæt nøglen. Den gemmes i Keychain.
 
 ### 3. Giv tilladelser
 
-Første gang du holder Fn vil macOS bede om tilladelser. Du skal acceptere alle tre:
+Når macOS spørger første gang, accepter:
+- **Microphone** - til at høre dig diktere
+- **Speech Recognition** - til on-device tale → tekst
+- **Accessibility** - til at lytte efter Fn og indsætte tekst i andre apps
 
-- **Microphone**: System Settings → Privacy & Security → Microphone → JM Voicing ✅
-- **Speech Recognition**: System Settings → Privacy & Security → Speech Recognition → JM Voicing ✅
-- **Accessibility**: System Settings → Privacy & Security → Accessibility → JM Voicing ✅
-  (kræves for at lytte efter Fn og simulere ⌘V)
+Hvis du ikke får prompts: åbn **System Settings → Privacy & Security** og tilføj JM Voicing manuelt under hver kategori.
 
 ### 4. Slå macOS' indbyggede Fn-dictation FRA
 
 Ellers stjæler systemet Fn-tasten:
 
-- System Settings → **Keyboard** → **Dictation**: Off
-- System Settings → **Keyboard** → **Press 🌐 key to**: **Do Nothing**
-
-### 5. Tilføj din Anthropic API key
-
-Klik på menubar-ikonet → **Indstillinger…** → indsæt din API key (`sk-ant-...`).
-Den gemmes sikkert i macOS Keychain.
+- **System Settings → Keyboard → Dictation: Off**
+- **System Settings → Keyboard → Press 🌐 key to: Do Nothing**
 
 ---
 
-## Sådan bruger du den
+## Sådan bruger du de tre features
 
-1. Klik et tekstfelt et sted (Mail, Slack, browseren, et terminalvindue, hvor som helst).
-2. **Hold Fn nede** mens du taler. Ikonet bliver fyldt mens du optager.
-3. **Slip Fn**. Et lille `Pop` lyder når teksten er indsat.
+### 🎤 Diktér (Hold Fn)
+1. Klik et tekstfelt i hvilken som helst app
+2. **Hold Fn** mens du taler
+3. Slip Fn - efter et par sekunder indsættes den polerede tekst
 
-Du behøver ikke skifte sprog. App'en kører dansk og engelsk recognition parallelt og vælger det resultat med højest confidence.
+### ✓ Tjek grammatik (⌃⌥G)
+1. Marker et stykke tekst i fx Mail, Slack, Notes
+2. Tryk **⌃⌥G**
+3. Den rettede version erstatter dit udvalg. Stavefejl og grammatik er rettet, men din tone, dit ordvalg og dit sprog er bevaret 1:1.
+
+### ✨ AI-kommando (⌃⌥A)
+1. (Valgfrit) Marker tekst først - fx en mail du vil svare på
+2. Tryk **⌃⌥A** - en lille popup vises midt på skærmen
+3. Skriv kommandoen, fx:
+   - *"svar høfligt nej med disse punkter: jeg er i ferie til 1. juni og kan først tage møder derefter"*
+   - *"oversæt til engelsk"*
+   - *"gør halvt så langt"*
+   - *"skriv en kort takke-besked"*
+4. Tryk **Enter** - resultatet indsættes ved markøren (eller erstatter dit udvalg)
 
 ---
 
-## Tilpas tonen
+## Tilpas din tone (kun dictation-polering)
 
-Det polerede output bruger en hardcoded prompt der beskriver din skrivestil. Den ligger i:
+Filen `JMVoicing/Tone/TonePrompt.swift` indeholder beskrivelsen af din skrivestil. Default er dansk uformel, men du kan redigere `voiceDescription` til hvad som helst - tilføj fx 2-3 eksempler på tekst du selv har skrevet, så kopierer Claude stilen.
 
-`JMVoicing/Tone/TonePrompt.swift`
-
-Default-beskrivelsen er "uformel, direkte, korte sætninger, ingen pompøse ord". Rediger `voiceDescription`-strengen frit. Et godt trick: tilføj 2-3 eksempler på tekst du selv har skrevet. Claude kopierer stilen overraskende godt.
-
-Du kan også slå grammatik-passet helt fra under **Indstillinger** → "Polér grammatik". Så bliver den rå transcription indsat direkte (ingen Claude-omkostning, ingen risiko for at modellen omformulerer).
+Grammar-check (⌃⌥G) bruger IKKE tone-prompten - den ændrer bevidst ikke din stil.
 
 ---
 
 ## Arkitektur
 
 ```
-JMVoicingApp.swift          # SwiftUI entry point
-AppDelegate.swift           # Menu bar + status ikon
-DictationCoordinator.swift  # State machine: idle → record → transcribe → polish → insert
+JMVoicingApp.swift                  # SwiftUI entry point
+AppDelegate.swift                   # Menu bar + alle hotkeys
+DictationCoordinator.swift          # Fn flow: optag → transcriber → polér → indsæt
+SelectionActionCoordinator.swift    # ⌃⌥G & ⌃⌥A flows
 
 Managers/
-  HotkeyManager.swift       # CGEventTap der lytter på Fn-modifier
-  AudioRecorder.swift       # AVAudioRecorder → m4a fil i tmp
-  TextInserter.swift        # Pasteboard + simuleret ⌘V
+  HotkeyManager.swift               # Fn-listener via CGEventTap
+  GlobalHotkey.swift                # ⌃⌥G og ⌃⌥A via Carbon RegisterEventHotKey
+  AudioRecorder.swift               # AVAudioRecorder → m4a
+  SelectionService.swift            # Læs markeret tekst via simuleret ⌘C
+  TextInserter.swift                # Indsæt via pasteboard + simuleret ⌘V
 
 Services/
-  NativeSpeechService.swift # macOS SFSpeechRecognizer (da-DK + en-US, on-device)
-  ClaudeService.swift       # POST /v1/messages (claude-opus-4-7)
+  NativeSpeechService.swift         # SFSpeechRecognizer (da-DK + en-US parallelt)
+  ClaudeService.swift               # Dictation polering (tone-tilpasset)
+  GrammarCheckService.swift         # Streng grammatik-tjek (bevarer tone)
+  InlineCommandService.swift        # AI-kommando med markeret tekst som kontekst
+
+UI/
+  CommandPaletteView.swift          # SwiftUI popup-UI
+  CommandPaletteController.swift    # NSPanel-wrapper (floating, non-activating)
 
 Settings/
-  SettingsStore.swift       # API key i Keychain, prefs i UserDefaults
-  SettingsView.swift        # SwiftUI Settings-vindue
+  SettingsStore.swift               # API key i Keychain, prefs i UserDefaults
+  SettingsView.swift                # SwiftUI Settings-vindue
 
 Tone/
-  TonePrompt.swift          # Beskrivelse af din skrivestil (rediger her)
+  TonePrompt.swift                  # Din skrivestil (kun til dictation)
 ```
+
+Alle Claude-kald bruger `claude-opus-4-7` med `effort: "max"` for bedste kvalitet, prompt-caching på system-prompten for at minimere omkostninger ved gentagne kald.
 
 ---
 
 ## Omkostninger
 
-- **Transcription**: gratis (on-device via macOS Speech Recognition).
-- **Claude polish (Opus 4.7)**: $5/M input tokens, $25/M output tokens. Med prompt-caching på system-prompten bliver gentagne dictations meget billige - typisk under $0.01 per dictation.
+- **Transcription**: gratis (on-device, kører på din Mac)
+- **Claude Opus 4.7**: $5/M input, $25/M output. Med caching og max effort er typisk dictation ~$0.02-0.05, grammar-check ~$0.01, AI-kommando ~$0.05-0.20 afhængigt af længde.
 
-For en typisk bruger (10-20 dictations om dagen) bliver det få dollars om måneden.
-
-Vil du spare endnu mere? Skift `model` i `ClaudeService.swift` fra `"claude-opus-4-7"` til `"claude-haiku-4-5"` (5x billigere, lidt mindre præcis) eller `"claude-sonnet-4-6"` (mellem).
+Skift `model` i de tre service-filer fra `"claude-opus-4-7"` til `"claude-sonnet-4-6"` hvis du vil halvere prisen mod let lavere kvalitet, eller `"claude-haiku-4-5"` for 5x billigere.
 
 ---
 
@@ -125,22 +150,12 @@ Vil du spare endnu mere? Skift `model` i `ClaudeService.swift` fra `"claude-opus
 
 | Problem | Løsning |
 |---|---|
-| Fn-tasten gør ingenting | Slå macOS dictation fra (se step 4). Tjek Accessibility tilladelse. |
-| "Manglende Anthropic API key" | Åbn Indstillinger og indsæt din key. |
-| Tekst kommer ikke ind i feltet | Tjek Accessibility tilladelse. Klik først i tekstfeltet før du dikterer. |
-| "Speech Recognition er ikke tilladt" | System Settings → Privacy & Security → Speech Recognition → JM Voicing |
-| Forkert sprog detekteret | Sig sætningen lidt længere - korte sætninger kan tippe forkert. |
-| Tonen er forkert | Rediger `voiceDescription` i `TonePrompt.swift`. |
-
----
-
-## Hvad er IKKE inkluderet (men kan tilføjes senere)
-
-- OpenAI Whisper-transcription (mere præcis end macOS' indbyggede, men koster og kræver ekstra API key)
-- Lokal whisper.cpp (fuldt offline med Whisper-kvalitet)
-- Historik over tidligere dictations
-- Custom hotkey i Settings UI
-- Auto-update via Sparkle
+| Fn gør ingenting | Step 4 ovenfor - slå macOS-dictation fra. Tjek Accessibility. |
+| ⌃⌥G / ⌃⌥A gør ingenting | Tjek Accessibility-tilladelse. Genvejen virker IKKE før app'en er startet. |
+| "Marker først tekst" når jeg har markeret | Nogle apps tillader ikke ⌘C-via-script. Prøv et almindeligt tekstfelt. |
+| "Manglende Anthropic API key" | Indstillinger → indsæt key |
+| Forkert sprog detekteret i dictation | Tal længere ad gangen - korte sætninger er svære for sprog-detection. |
+| macOS siger "kan ikke åbne fordi udvikler ikke kan verificeres" | Højre-klik → Open. Eller terminal: `xattr -dr com.apple.quarantine /Applications/JMVoicing.app` |
 
 ---
 

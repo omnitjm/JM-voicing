@@ -1,0 +1,70 @@
+name: Build .app
+
+on:
+  push:
+    branches: [main, claude/voice-dictation-mac-pcebx]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build .app (ad-hoc signed, Release)
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project JMVoicing.xcodeproj \
+            -scheme JMVoicing \
+            -configuration Release \
+            -derivedDataPath build \
+            -destination 'platform=macOS,arch=arm64' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build
+
+      - name: Locate .app
+        id: locate
+        run: |
+          APP=$(find build/Build/Products/Release -maxdepth 2 -name "JMVoicing.app" -print -quit)
+          echo "app=$APP" >> "$GITHUB_OUTPUT"
+          echo "Found: $APP"
+
+      - name: Ad-hoc sign with hardened runtime + entitlements
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements JMVoicing/JMVoicing.entitlements \
+            --options runtime \
+            "${{ steps.locate.outputs.app }}"
+          codesign --verify --verbose=2 "${{ steps.locate.outputs.app }}"
+
+      - name: Zip
+        run: |
+          cd "$(dirname '${{ steps.locate.outputs.app }}')"
+          ditto -c -k --sequesterRsrc --keepParent JMVoicing.app "$GITHUB_WORKSPACE/JMVoicing.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JMVoicing-app
+          path: JMVoicing.zip
+          retention-days: 90
+
+      - name: Attach to release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: JMVoicing.zip
+          generate_release_notes: true

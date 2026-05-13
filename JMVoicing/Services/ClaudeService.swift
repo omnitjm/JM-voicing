@@ -43,6 +43,7 @@ struct ClaudeService {
         let payload: [String: Any] = [
             "model": model,
             "max_tokens": 4096,
+            "output_config": ["effort": "max"],
             "system": [
                 [
                     "type": "text",
