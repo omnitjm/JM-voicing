@@ -15,7 +15,7 @@ final class SelectionActionCoordinator {
     // MARK: - Grammar check
 
     /// Læs markeret tekst, kør grammar-check, indsæt rettet tekst i stedet.
-    func runGrammarCheck() {
+    nonisolated func runGrammarCheck() {
         Task { @MainActor in
             guard !settingsStore.anthropicApiKey.isEmpty else {
                 presentAlert("Manglende Anthropic API key. Åbn Indstillinger og tilføj den.")
@@ -44,7 +44,7 @@ final class SelectionActionCoordinator {
     // MARK: - Inline AI Command
 
     /// Åbn palette der spørger efter en kommando på den markerede tekst.
-    func runInlineCommand() {
+    nonisolated func runInlineCommand() {
         Task { @MainActor in
             guard !settingsStore.anthropicApiKey.isEmpty else {
                 presentAlert("Manglende Anthropic API key. Åbn Indstillinger og tilføj den.")
