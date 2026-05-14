@@ -223,6 +223,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.image?.isTemplate = true
     }
 
+    /// Public entry point used by the SwiftUI `Settings` scene fallback. Same
+    /// behavior as the menu's `openSettings` action.
+    func openSettingsFromExternal() {
+        openSettings()
+    }
+
     @objc private func openSettings() {
         if settingsWindow == nil {
             let window = NSWindow(
