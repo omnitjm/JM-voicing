@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var selectionCoordinator: SelectionActionCoordinator!
     private var grammarHotkey: GlobalHotkey?
     private var commandHotkey: GlobalHotkey?
+    private var welcomeWindow: WelcomeWindowController?
     private var cancellables = Set<AnyCancellable>()
     private var settingsWindow: NSWindow?
 
@@ -42,9 +43,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerCommandHotkey()
         observeSettings()
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.warnAboutMissingSetup()
+        welcomeWindow = WelcomeWindowController(settingsStore: settingsStore)
+        let firstLaunch = !settingsStore.hasSeenWelcome
+        if firstLaunch {
+            settingsStore.hasSeenWelcome = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.welcomeWindow?.show()
+            }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.warnAboutMissingSetup()
+            }
         }
+    }
+
+    @objc private func showWelcome() {
+        welcomeWindow?.show()
     }
 
     // MARK: - Setup-tjek
@@ -181,6 +195,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         menu.addItem(NSMenuItem.separator())
+        let demoItem = NSMenuItem(title: "Vis demo / velkomst", action: #selector(showWelcome), keyEquivalent: "")
+        demoItem.target = self
+        menu.addItem(demoItem)
+
         let settingsItem = NSMenuItem(title: "Indstillinger…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)

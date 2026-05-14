@@ -20,6 +20,10 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(enableGrammarPolish, forKey: Keys.enableGrammarPolish) }
     }
 
+    @Published var hasSeenWelcome: Bool {
+        didSet { defaults.set(hasSeenWelcome, forKey: Keys.hasSeenWelcome) }
+    }
+
     // MARK: Genveje
 
     @Published var dictationTrigger: DictationTrigger {
@@ -43,6 +47,7 @@ final class SettingsStore: ObservableObject {
     init() {
         self.anthropicApiKey = Self.loadKeychain(service: "com.jm.voicing", account: "anthropic_api_key") ?? ""
         self.enableGrammarPolish = defaults.object(forKey: Keys.enableGrammarPolish) as? Bool ?? true
+        self.hasSeenWelcome = defaults.bool(forKey: Keys.hasSeenWelcome)
 
         let trigRaw = defaults.string(forKey: Keys.dictationTrigger) ?? DictationTrigger.fn.rawValue
         self.dictationTrigger = DictationTrigger(rawValue: trigRaw) ?? .fn
@@ -68,6 +73,7 @@ final class SettingsStore: ObservableObject {
         static let dictationTrigger    = "dictationTrigger"
         static let grammarShortcut     = "grammarShortcut"
         static let commandShortcut     = "commandShortcut"
+        static let hasSeenWelcome      = "hasSeenWelcome"
         // Sentinel-værdi når en nullable shortcut bevidst er fjernet af brugeren.
         static let disabledMarker      = "__disabled__"
     }
