@@ -165,11 +165,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
         if #available(macOS 14, *) {
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         } else {
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        // LSUIElement=true apps on Sequoia sometimes fail to bring the Settings
+        // window forward via the standard action alone. Force it ourselves.
+        DispatchQueue.main.async {
+            for window in NSApp.windows {
+                let name = window.frameAutosaveName.lowercased()
+                let title = window.title.lowercased()
+                if name.contains("settings") || name.contains("preferences")
+                    || title.contains("settings") || title.contains("indstillinger") {
+                    window.makeKeyAndOrderFront(nil)
+                    window.orderFrontRegardless()
+                    return
+                }
+            }
         }
     }
 
