@@ -50,6 +50,29 @@ jobs:
             "${{ steps.locate.outputs.app }}"
           codesign --verify --verbose=2 "${{ steps.locate.outputs.app }}"
 
+      - name: Verify app structure
+        run: |
+          set -euo pipefail
+          APP="${{ steps.locate.outputs.app }}"
+          PLIST="$APP/Contents/Info.plist"
+          EXEC="$APP/Contents/MacOS/JMVoicing"
+          echo "=== Architecture ==="
+          lipo -info "$EXEC"
+          echo "=== Info.plist ==="
+          /usr/libexec/PlistBuddy -c Print "$PLIST"
+          echo "=== Required keys ==="
+          for key in CFBundleIdentifier CFBundleExecutable LSMinimumSystemVersion LSUIElement NSMicrophoneUsageDescription NSSpeechRecognitionUsageDescription; do
+            value=$(/usr/libexec/PlistBuddy -c "Print :$key" "$PLIST" 2>/dev/null || echo "MISSING")
+            echo "  $key = $value"
+            if [ "$value" = "MISSING" ]; then
+              echo "::error::Required Info.plist key missing: $key"
+              exit 1
+            fi
+          done
+          echo "=== Entitlements ==="
+          codesign -d --entitlements - "$APP" 2>&1 | tail -n 20
+          echo "=== App structure OK ==="
+
       - name: Smoke-test launch
         continue-on-error: true
         run: |
