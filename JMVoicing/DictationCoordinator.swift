@@ -92,6 +92,11 @@ final class DictationCoordinator: ObservableObject {
 
     private func notifyError(_ message: String) {
         state = .error
+        if #available(macOS 14, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
         let alert = NSAlert()
         alert.messageText = "JM Voicing"
         alert.informativeText = message

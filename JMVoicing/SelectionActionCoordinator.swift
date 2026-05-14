@@ -78,6 +78,11 @@ final class SelectionActionCoordinator {
     // MARK: - Helpers
 
     private func presentAlert(_ message: String) {
+        if #available(macOS 14, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
         let alert = NSAlert()
         alert.messageText = "JM Voicing"
         alert.informativeText = message
