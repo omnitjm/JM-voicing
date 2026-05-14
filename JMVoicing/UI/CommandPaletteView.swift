@@ -4,6 +4,7 @@ import SwiftUI
 struct CommandPaletteView: View {
     let selectedText: String?
     let onSubmit: (String) -> Void
+    let onPreset: (PresetCommand) -> Void
     let onCancel: () -> Void
 
     @State private var command: String = ""
@@ -34,9 +35,30 @@ struct CommandPaletteView: View {
                 .frame(maxHeight: 110)
                 .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
                 .cornerRadius(6)
+
+                // Ét-klik presets - virker på dansk og engelsk
+                HStack(spacing: 8) {
+                    ForEach(PresetCommand.allCases) { preset in
+                        Button {
+                            guard !isSubmitting else { return }
+                            isSubmitting = true
+                            onPreset(preset)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: preset.symbol)
+                                Text(preset.label)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(isSubmitting)
+                    }
+                    Spacer()
+                }
             }
 
-            TextField("Hvad skal der ske? Fx: svar høfligt nej, oversæt til engelsk, gør kortere…",
+            TextField("Eller skriv en kommando: svar høfligt nej, oversæt til engelsk, gør kortere…",
                       text: $command, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: 14))
@@ -56,7 +78,7 @@ struct CommandPaletteView: View {
             }
         }
         .padding(16)
-        .frame(width: 520)
+        .frame(width: 540)
         .background(.regularMaterial)
         .onAppear { fieldFocused = true }
         .onExitCommand(perform: onCancel)

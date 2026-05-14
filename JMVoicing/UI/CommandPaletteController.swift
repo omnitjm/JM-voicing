@@ -11,6 +11,7 @@ final class CommandPaletteController {
 
     func show(selectedText: String?,
               onSubmit: @escaping (String) -> Void,
+              onPreset: @escaping (PresetCommand) -> Void,
               onCancel: @escaping () -> Void) {
         if let existing = panel {
             existing.makeKeyAndOrderFront(nil)
@@ -39,6 +40,10 @@ final class CommandPaletteController {
             onSubmit: { [weak self] command in
                 self?.dismiss()
                 onSubmit(command)
+            },
+            onPreset: { [weak self] preset in
+                self?.dismiss()
+                onPreset(preset)
             },
             onCancel: { [weak self] in
                 self?.dismiss()

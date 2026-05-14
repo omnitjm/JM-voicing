@@ -56,6 +56,9 @@ final class SelectionActionCoordinator {
                 onSubmit: { [weak self] command in
                     self?.executeCommand(command, on: selected)
                 },
+                onPreset: { [weak self] preset in
+                    self?.executePreset(preset, on: selected)
+                },
                 onCancel: {}
             )
         }
@@ -67,6 +70,28 @@ final class SelectionActionCoordinator {
                 let service = InlineCommandService(apiKey: settingsStore.anthropicApiKey)
                 let result = try await service.run(command: command, selectedText: selectedText)
                 guard !result.isEmpty else { return }
+                TextInserter.insert(result)
+                NSSound(named: "Pop")?.play()
+            } catch {
+                presentAlert(error.localizedDescription)
+            }
+        }
+    }
+
+    private func executePreset(_ preset: PresetCommand, on selectedText: String?) {
+        Task { @MainActor in
+            guard let text = selectedText, !text.isEmpty else {
+                presentAlert("Marker først den tekst du vil bearbejde.")
+                return
+            }
+            do {
+                let service = PresetCommandService(apiKey: settingsStore.anthropicApiKey)
+                let result = try await service.run(preset: preset, text: text)
+                guard !result.isEmpty else { return }
+                if result == text {
+                    NSSound(named: "Tink")?.play()
+                    return
+                }
                 TextInserter.insert(result)
                 NSSound(named: "Pop")?.play()
             } catch {
