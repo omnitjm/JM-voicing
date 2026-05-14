@@ -73,13 +73,141 @@ struct SettingsView: View {
                 .padding(.top, 4)
             }
 
-            Section("Setup") {
-                Text("Slå macOS' Fn-dictation FRA hvis du bruger Fn til diktering: System Settings → Keyboard → Dictation: Off og Press 🌐 key to: Do Nothing.")
-                Text("Tildel tilladelser: System Settings → Privacy & Security → Microphone + Speech Recognition + Accessibility.")
+            Section("Setup - Tilladelser") {
+                permissionRow(
+                    title: "Mikrofon",
+                    description: "Bruges til at høre dig diktere.",
+                    status: micStatus,
+                    primaryButton: {
+                        if micStatus == .notDetermined {
+                            PermissionsService.requestMicrophone { _ in refreshPermissions() }
+                        } else {
+                            PermissionsService.openMicrophoneSettings()
+                        }
+                    },
+                    primaryLabel: micStatus == .notDetermined ? "Spørg om adgang" : "Åbn System Settings"
+                )
+
+                Divider()
+
+                permissionRow(
+                    title: "Speech Recognition",
+                    description: "On-device transcription af tale til tekst.",
+                    status: speechStatus,
+                    primaryButton: {
+                        if speechStatus == .notDetermined {
+                            PermissionsService.requestSpeech { _ in refreshPermissions() }
+                        } else {
+                            PermissionsService.openSpeechSettings()
+                        }
+                    },
+                    primaryLabel: speechStatus == .notDetermined ? "Spørg om adgang" : "Åbn System Settings"
+                )
+
+                Divider()
+
+                permissionRow(
+                    title: "Accessibility",
+                    description: "Nødvendig for at lytte efter Fn / ⌃⌥G / ⌃⌥A og indsætte tekst i andre apps.",
+                    status: accessibilityStatus,
+                    primaryButton: {
+                        // requestAccessibility prompter første gang. Hvis allerede afvist
+                        // åbner vi System Settings så brugeren kan slå JM Voicing til manuelt.
+                        if accessibilityStatus == .denied {
+                            PermissionsService.openAccessibilitySettings()
+                        } else {
+                            PermissionsService.requestAccessibility()
+                            refreshPermissions()
+                        }
+                    },
+                    primaryLabel: accessibilityStatus == .granted ? "Åbn System Settings" : "Aktivér"
+                )
+
+                HStack {
+                    Spacer()
+                    Button("Tjek status igen") { refreshPermissions() }
+                        .controlSize(.small)
+                }
+            }
+
+            Section("Setup - macOS Fn-dictation") {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "keyboard")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.tint)
+                        .frame(width: 22)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Slå macOS' egen Fn-dictation FRA")
+                            .font(.body).fontWeight(.medium)
+                        Text("Hvis du bruger Fn som push-to-talk: Keyboard → Dictation: Off, og Press 🌐 key to: Do Nothing. Ellers stjæler systemet tasten.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Button("Åbn Keyboard Settings") {
+                        PermissionsService.openKeyboardSettings()
+                    }
+                    .controlSize(.regular)
+                }
+                .padding(.vertical, 4)
             }
         }
         .padding(20)
         .frame(width: 580)
+        .onAppear { refreshPermissions() }
+    }
+
+    // MARK: - Permission state
+
+    @State private var micStatus: PermissionStatus = .notDetermined
+    @State private var speechStatus: PermissionStatus = .notDetermined
+    @State private var accessibilityStatus: PermissionStatus = .notDetermined
+
+    private func refreshPermissions() {
+        micStatus = PermissionsService.microphoneStatus()
+        speechStatus = PermissionsService.speechStatus()
+        accessibilityStatus = PermissionsService.accessibilityStatus()
+    }
+
+    @ViewBuilder
+    private func permissionRow(
+        title: String,
+        description: String,
+        status: PermissionStatus,
+        primaryButton: @escaping () -> Void,
+        primaryLabel: String
+    ) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: status.symbol)
+                .font(.system(size: 16))
+                .foregroundStyle(statusColor(status))
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(title).font(.body).fontWeight(.medium)
+                    Text(status.label)
+                        .font(.caption)
+                        .foregroundStyle(statusColor(status))
+                }
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Button(primaryLabel, action: primaryButton)
+                .controlSize(.regular)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func statusColor(_ status: PermissionStatus) -> Color {
+        switch status {
+        case .granted: return .green
+        case .denied: return .red
+        case .notDetermined: return .secondary
+        }
     }
 
     @ViewBuilder
