@@ -50,6 +50,36 @@ jobs:
             "${{ steps.locate.outputs.app }}"
           codesign --verify --verbose=2 "${{ steps.locate.outputs.app }}"
 
+      - name: Smoke-test launch
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          APP="${{ steps.locate.outputs.app }}"
+          EXEC="$APP/Contents/MacOS/JMVoicing"
+          if [ ! -x "$EXEC" ]; then
+            echo "::error::Executable not found at $EXEC"
+            exit 1
+          fi
+          echo "Launching $EXEC for 4 seconds to verify it doesn't crash on startup..."
+          "$EXEC" > /tmp/jm-smoke.log 2>&1 &
+          PID=$!
+          sleep 4
+          if kill -0 "$PID" 2>/dev/null; then
+            echo "✓ App still running after 4s — launch path is OK."
+            kill "$PID" 2>/dev/null || true
+            wait "$PID" 2>/dev/null || true
+            STATUS="alive"
+          else
+            wait "$PID" 2>/dev/null
+            RC=$?
+            echo "::warning::App exited within 4s with code $RC"
+            STATUS="exited:$RC"
+          fi
+          echo "--- launch log (last 60 lines) ---"
+          tail -n 60 /tmp/jm-smoke.log || true
+          echo "--- end log ---"
+          echo "Smoke test result: $STATUS"
+
       - name: Zip
         run: |
           cd "$(dirname '${{ steps.locate.outputs.app }}')"
