@@ -44,6 +44,7 @@ struct GrammarCheckService {
             "model": model,
             "max_tokens": 4096,
             "output_config": ["effort": "max"],
+            "thinking": ["type": "adaptive"],
             "system": [
                 [
                     "type": "text",
