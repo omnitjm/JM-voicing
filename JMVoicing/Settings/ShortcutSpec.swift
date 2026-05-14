@@ -103,6 +103,10 @@ enum DictationTrigger: String, CaseIterable, Identifiable, Codable {
     case rightControl
     case rightShift
     case rightCommand
+    case leftOption
+    case leftControl
+    case leftShift
+    case leftCommand
 
     var id: String { rawValue }
 
@@ -114,16 +118,39 @@ enum DictationTrigger: String, CaseIterable, Identifiable, Codable {
         case .rightControl: return 62
         case .rightShift:   return 60
         case .rightCommand: return 54
+        case .leftOption:   return 58
+        case .leftControl:  return 59
+        case .leftShift:    return 56
+        case .leftCommand:  return 55
         }
     }
 
     var display: String {
         switch self {
         case .fn:           return "Fn / 🌐"
+        case .rightOption:  return "Højre ⌥ (option)"
+        case .rightControl: return "Højre ⌃ (control)"
+        case .rightShift:   return "Højre ⇧ (shift)"
+        case .rightCommand: return "Højre ⌘ (command)"
+        case .leftOption:   return "Venstre ⌥ (option)"
+        case .leftControl:  return "Venstre ⌃ (control)"
+        case .leftShift:    return "Venstre ⇧ (shift)"
+        case .leftCommand:  return "Venstre ⌘ (command)"
+        }
+    }
+
+    /// Kort kompakt label til menu bar og knapper, fx "Højre ⌥".
+    var shortDisplay: String {
+        switch self {
+        case .fn:           return "Fn / 🌐"
         case .rightOption:  return "Højre ⌥"
         case .rightControl: return "Højre ⌃"
         case .rightShift:   return "Højre ⇧"
         case .rightCommand: return "Højre ⌘"
+        case .leftOption:   return "Venstre ⌥"
+        case .leftControl:  return "Venstre ⌃"
+        case .leftShift:    return "Venstre ⇧"
+        case .leftCommand:  return "Venstre ⌘"
         }
     }
 }
