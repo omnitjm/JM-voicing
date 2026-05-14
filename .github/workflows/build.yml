@@ -2,13 +2,13 @@ name: Build .app
 
 on:
   push:
-    branches: [main, claude/voice-dictation-mac-pcebx]
+    branches: [main, 'claude/**']
     tags: ['v*']
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 25
 
     steps:
