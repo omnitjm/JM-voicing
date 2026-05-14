@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var grammarHotkey: GlobalHotkey?
     private var commandHotkey: GlobalHotkey?
     private var cancellables = Set<AnyCancellable>()
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -165,26 +166,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
+        if settingsWindow == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 620, height: 640),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "JM Voicing — Indstillinger"
+            window.isReleasedWhenClosed = false
+            window.center()
+            window.setFrameAutosaveName("JMVoicingSettings")
+            let view = SettingsView().environmentObject(settingsStore)
+            window.contentView = NSHostingView(rootView: view)
+            settingsWindow = window
+        }
         if #available(macOS 14, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            NSApp.activate()
         } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+            NSApp.activate(ignoringOtherApps: true)
         }
-        NSApp.activate(ignoringOtherApps: true)
-        // LSUIElement=true apps on Sequoia sometimes fail to bring the Settings
-        // window forward via the standard action alone. Force it ourselves.
-        DispatchQueue.main.async {
-            for window in NSApp.windows {
-                let name = window.frameAutosaveName.lowercased()
-                let title = window.title.lowercased()
-                if name.contains("settings") || name.contains("preferences")
-                    || title.contains("settings") || title.contains("indstillinger") {
-                    window.makeKeyAndOrderFront(nil)
-                    window.orderFrontRegardless()
-                    return
-                }
-            }
-        }
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        settingsWindow?.orderFrontRegardless()
     }
 
     @objc private func quit() {
