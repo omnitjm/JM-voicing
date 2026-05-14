@@ -1,4 +1,6 @@
 import AppKit
+import AVFoundation
+import Speech
 import SwiftUI
 import Combine
 
@@ -39,6 +41,62 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerGrammarHotkey()
         registerCommandHotkey()
         observeSettings()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.warnAboutMissingSetup()
+        }
+    }
+
+    // MARK: - Setup-tjek
+    //
+    // På Sequoia er det meget svært at debugge "intet sker når jeg trykker Fn".
+    // Vi tjekker derfor de mest typiske setup-fejl ved start og fortæller
+    // brugeren hvad der mangler. Vises kun hvis noget faktisk mangler.
+    private func warnAboutMissingSetup() {
+        var problems: [String] = []
+
+        if !AXIsProcessTrusted() {
+            problems.append("• Accessibility er ikke tilladt. Uden den virker hverken Fn-diktering, ⌃⌥G eller ⌃⌥A.")
+        }
+
+        if AVCaptureDevice.authorizationStatus(for: .audio) == .denied {
+            problems.append("• Mikrofon-adgang er afvist. Diktering kan ikke optage lyd.")
+        }
+
+        if SFSpeechRecognizer.authorizationStatus() == .denied {
+            problems.append("• Speech Recognition er afvist. Diktering kan ikke omdanne tale til tekst.")
+        }
+
+        if settingsStore.anthropicApiKey.isEmpty {
+            problems.append("• Anthropic API key mangler. Åbn Indstillinger og indsæt din key.")
+        }
+
+        guard !problems.isEmpty else { return }
+
+        if #available(macOS 14, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        let alert = NSAlert()
+        alert.messageText = "JM Voicing er ikke helt klar endnu"
+        alert.informativeText = problems.joined(separator: "\n\n")
+            + "\n\nÅbn System Settings → Privacy & Security for at give tilladelser, og åbn Indstillinger her i appen for API key. Genstart appen efter du har givet tilladelser."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Åbn Privacy & Security")
+        alert.addButton(withTitle: "Åbn Indstillinger")
+        alert.addButton(withTitle: "Senere")
+        let response = alert.runModal()
+        switch response {
+        case .alertFirstButtonReturn:
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
+                NSWorkspace.shared.open(url)
+            }
+        case .alertSecondButtonReturn:
+            openSettings()
+        default:
+            break
+        }
     }
 
     // MARK: - Observere settings-ændringer og re-registrere genveje live
