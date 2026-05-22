@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 /// NSWindow-wrapper omkring WelcomeView. Vises på første launch og kan
-/// genåbnes via menu baren. Alle metoder antager main thread (AppKit-konvention).
+/// genåbnes via menu baren. Skal kun bruges fra main thread.
+@MainActor
 final class WelcomeWindowController {
     private var window: NSWindow?
     private let settingsStore: SettingsStore

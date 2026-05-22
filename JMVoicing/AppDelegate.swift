@@ -47,18 +47,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let firstLaunch = !settingsStore.hasSeenWelcome
         if firstLaunch {
             settingsStore.hasSeenWelcome = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 300_000_000)
                 self?.welcomeWindow?.show()
             }
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
                 self?.warnAboutMissingSetup()
             }
         }
     }
 
     @objc private func showWelcome() {
-        welcomeWindow?.show()
+        Task { @MainActor [weak self] in
+            self?.welcomeWindow?.show()
+        }
     }
 
     // MARK: - Setup-tjek
