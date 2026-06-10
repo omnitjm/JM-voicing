@@ -41,6 +41,36 @@ final class SelectionActionCoordinator {
         }
     }
 
+    // MARK: - One-press Improve
+
+    /// Læs markeret tekst, kør "Improve clarity"-preset, indsæt forbedret tekst i stedet.
+    /// Ét tastetryk, ingen palette - samme UX som ⌃⌥G.
+    nonisolated func runImprove() {
+        Task { @MainActor in
+            guard !settingsStore.anthropicApiKey.isEmpty else {
+                presentAlert("Manglende Anthropic API key. Åbn Indstillinger og tilføj den.")
+                return
+            }
+            guard let selected = await SelectionService.readSelectedText() else {
+                presentAlert("Marker først den tekst du vil have forbedret.")
+                return
+            }
+
+            do {
+                let service = PresetCommandService(apiKey: settingsStore.anthropicApiKey)
+                let improved = try await service.run(preset: .improveClarity, text: selected)
+                if improved == selected {
+                    NSSound(named: "Tink")?.play()
+                    return
+                }
+                TextInserter.insert(improved)
+                NSSound(named: "Pop")?.play()
+            } catch {
+                presentAlert(error.localizedDescription)
+            }
+        }
+    }
+
     // MARK: - Inline AI Command
 
     /// Åbn palette der spørger efter en kommando på den markerede tekst.

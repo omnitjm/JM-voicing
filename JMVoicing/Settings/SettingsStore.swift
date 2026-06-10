@@ -42,6 +42,11 @@ final class SettingsStore: ObservableObject {
         didSet { saveShortcut(commandShortcut, key: Keys.commandShortcut) }
     }
 
+    /// nil = ingen genvej for "Improve"-ét-klik (slået fra).
+    @Published var improveShortcut: ShortcutSpec? {
+        didSet { saveShortcut(improveShortcut, key: Keys.improveShortcut) }
+    }
+
     // MARK: Init
 
     init() {
@@ -58,12 +63,16 @@ final class SettingsStore: ObservableObject {
         self.commandShortcut = Self.loadShortcut(key: Keys.commandShortcut,
                                                  fallback: .defaultCommand,
                                                  defaults: defaults)
+        self.improveShortcut = Self.loadShortcut(key: Keys.improveShortcut,
+                                                 fallback: .defaultImprove,
+                                                 defaults: defaults)
     }
 
     // MARK: Reset til defaults
 
     func resetGrammarShortcut() { grammarShortcut = .defaultGrammar }
     func resetCommandShortcut() { commandShortcut = .defaultCommand }
+    func resetImproveShortcut() { improveShortcut = .defaultImprove }
     func resetDictationTrigger() { dictationTrigger = .fn }
 
     // MARK: - UserDefaults keys
@@ -73,6 +82,7 @@ final class SettingsStore: ObservableObject {
         static let dictationTrigger    = "dictationTrigger"
         static let grammarShortcut     = "grammarShortcut"
         static let commandShortcut     = "commandShortcut"
+        static let improveShortcut     = "improveShortcut"
         static let hasSeenWelcome      = "hasSeenWelcome"
         // Sentinel-værdi når en nullable shortcut bevidst er fjernet af brugeren.
         static let disabledMarker      = "__disabled__"

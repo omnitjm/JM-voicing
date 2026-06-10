@@ -41,6 +41,12 @@ struct ShortcutSpec: Codable, Equatable {
         label: "A"
     )
 
+    static let defaultImprove = ShortcutSpec(
+        keyCode: 34,  // I
+        modifiers: UInt32(controlKey | optionKey),
+        label: "I"
+    )
+
     // MARK: - Capture fra NSEvent
 
     /// Bygger en ShortcutSpec fra et keyDown event. Returnerer nil hvis der

@@ -51,6 +51,19 @@ struct SettingsView: View {
                 Divider()
 
                 shortcutRow(
+                    symbol: "wand.and.stars",
+                    title: "Improve (samme logik, bedre formulering)",
+                    description: "Marker tekst, tryk genvejen. Claude strammer formuleringen op uden at ændre mening, stil eller sprog. Virker på dansk og engelsk."
+                ) {
+                    ShortcutRecorderView(
+                        shortcut: $store.improveShortcut,
+                        placeholder: "Klik for at sætte"
+                    )
+                }
+
+                Divider()
+
+                shortcutRow(
                     symbol: "sparkles",
                     title: "AI-kommando",
                     description: "Marker tekst (eller intet), tryk genvejen. Popup spørger om en kommando som anvendes på det markerede."
@@ -66,6 +79,7 @@ struct SettingsView: View {
                     Button("Nulstil genveje") {
                         store.resetDictationTrigger()
                         store.resetGrammarShortcut()
+                        store.resetImproveShortcut()
                         store.resetCommandShortcut()
                     }
                     .controlSize(.small)

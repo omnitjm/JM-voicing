@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var selectionCoordinator: SelectionActionCoordinator!
     private var grammarHotkey: GlobalHotkey?
     private var commandHotkey: GlobalHotkey?
+    private var improveHotkey: GlobalHotkey?
     private var welcomeWindow: WelcomeWindowController?
     private var cancellables = Set<AnyCancellable>()
     private var settingsWindow: NSWindow?
@@ -41,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         registerGrammarHotkey()
         registerCommandHotkey()
+        registerImproveHotkey()
         observeSettings()
 
         welcomeWindow = WelcomeWindowController(settingsStore: settingsStore)
@@ -146,6 +148,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.refreshMenu()
             }
             .store(in: &cancellables)
+
+        settingsStore.$improveShortcut
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.registerImproveHotkey()
+                self?.refreshMenu()
+            }
+            .store(in: &cancellables)
     }
 
     private func registerGrammarHotkey() {
@@ -161,6 +172,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let spec = settingsStore.commandShortcut else { return }
         commandHotkey = GlobalHotkey(spec: spec) { [weak self] in
             self?.selectionCoordinator.runInlineCommand()
+        }
+    }
+
+    private func registerImproveHotkey() {
+        improveHotkey = nil
+        guard let spec = settingsStore.improveShortcut else { return }
+        improveHotkey = GlobalHotkey(spec: spec) { [weak self] in
+            self?.selectionCoordinator.runImprove()
         }
     }
 
@@ -190,6 +209,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             addShortcutItem(menu, keys: g.display, subtitle: "tjek grammatik på markeret tekst")
         } else {
             addShortcutItem(menu, keys: "—", subtitle: "grammar-check (slået fra)")
+        }
+
+        if let i = settingsStore.improveShortcut {
+            addShortcutItem(menu, keys: i.display, subtitle: "forbedr markeret tekst (samme mening)")
+        } else {
+            addShortcutItem(menu, keys: "—", subtitle: "improve (slået fra)")
         }
 
         if let c = settingsStore.commandShortcut {

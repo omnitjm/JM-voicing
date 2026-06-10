@@ -83,9 +83,18 @@ struct WelcomeView: View {
                 symbol: "checkmark.seal.fill",
                 tint: .green,
                 shortcut: store.grammarShortcut?.display ?? "Slået fra",
-                title: "Tjek grammatik",
+                title: "Correct grammar",
                 howto: "Marker tekst i en hvilken som helst app, tryk genvejen. Rettet version erstatter den markerede.",
-                example: "Tone og sprog røres ikke - kun stavefejl, grammatik, tegnsætning."
+                example: "Tone og sprog røres ikke - kun stavefejl, grammatik, tegnsætning. Virker på dansk og engelsk."
+            )
+
+            featureRow(
+                symbol: "wand.and.stars",
+                tint: .orange,
+                shortcut: store.improveShortcut?.display ?? "Slået fra",
+                title: "Improve",
+                howto: "Marker tekst, tryk genvejen. Claude strammer formuleringen op uden at ændre mening eller sprog.",
+                example: "Samme logik og indhold, bare bedre formuleret. Virker på dansk og engelsk."
             )
 
             featureRow(
