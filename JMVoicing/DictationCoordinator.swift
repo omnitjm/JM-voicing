@@ -98,7 +98,7 @@ final class DictationCoordinator: ObservableObject {
             NSApp.activate(ignoringOtherApps: true)
         }
         let alert = NSAlert()
-        alert.messageText = "JM Voicing"
+        alert.messageText = "Gramchek"
         alert.informativeText = message
         alert.alertStyle = .warning
         alert.runModal()

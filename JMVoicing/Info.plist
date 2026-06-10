@@ -5,7 +5,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>JM Voicing</string>
+    <string>Gramchek</string>
     <key>CFBundleExecutable</key>
     <string>JMVoicing</string>
     <key>CFBundleIdentifier</key>
@@ -27,11 +27,11 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSMicrophoneUsageDescription</key>
-    <string>JM Voicing skal bruge mikrofonen til at diktere det du siger og indsætte det som tekst.</string>
+    <string>Gramchek skal bruge mikrofonen til at diktere det du siger og indsætte det som tekst.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
-    <string>JM Voicing bruger macOS' Speech Recognition til at omdanne din tale til tekst on-device.</string>
+    <string>Gramchek bruger macOS' Speech Recognition til at omdanne din tale til tekst on-device.</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>JM Voicing skal bruge dette for at indsætte tekst i andre apps.</string>
+    <string>Gramchek skal bruge dette for at indsætte tekst i andre apps.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>

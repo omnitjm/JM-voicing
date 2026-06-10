@@ -1,6 +1,6 @@
-# JM Voicing
+# Gramchek
 
-En personlig macOS menubar-app der gør tre ting via globale genveje:
+En personlig macOS menubar-app (Gramchek) der gør tre ting via globale genveje:
 
 | Genvej | Funktion |
 |---|---|
@@ -46,7 +46,7 @@ I Xcode: vælg dit Apple ID som signing team under **Signing & Capabilities**, t
 3. Settings → API keys → Create Key
 4. Kopier nøglen (`sk-ant-...`)
 
-### 2. Indsæt nøglen i JM Voicing
+### 2. Indsæt nøglen i Gramchek
 
 Klik på mikrofon-ikonet i menu baren → **Indstillinger…** → indsæt nøglen. Den gemmes i Keychain.
 
@@ -57,7 +57,7 @@ Når macOS spørger første gang, accepter:
 - **Speech Recognition** - til on-device tale → tekst
 - **Accessibility** - til at lytte efter Fn og indsætte tekst i andre apps
 
-Hvis du ikke får prompts: åbn **System Settings → Privacy & Security** og tilføj JM Voicing manuelt under hver kategori.
+Hvis du ikke får prompts: åbn **System Settings → Privacy & Security** og tilføj Gramchek manuelt under hver kategori.
 
 ### 4. Slå macOS' indbyggede Fn-dictation FRA
 

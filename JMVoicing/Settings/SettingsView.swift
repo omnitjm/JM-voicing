@@ -126,7 +126,7 @@ struct SettingsView: View {
                     status: accessibilityStatus,
                     primaryButton: {
                         // requestAccessibility prompter første gang. Hvis allerede afvist
-                        // åbner vi System Settings så brugeren kan slå JM Voicing til manuelt.
+                        // åbner vi System Settings så brugeren kan slå Gramchek til manuelt.
                         if accessibilityStatus == .denied {
                             PermissionsService.openAccessibilitySettings()
                         } else {

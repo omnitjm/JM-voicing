@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Viser CommandPaletteView som et flydende non-activating panel oven på alle apps.
 /// Vi bruger NSPanel + .nonactivatingPanel så panelet kan modtage tastatur-input
-/// uden at JM Voicing bliver "frontmost" - så ⌘V efter eksekvering rammer den
+/// uden at Gramchek bliver "frontmost" - så ⌘V efter eksekvering rammer den
 /// app brugeren oprindeligt arbejdede i.
 @MainActor
 final class CommandPaletteController {

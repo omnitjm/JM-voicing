@@ -99,7 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
         }
         let alert = NSAlert()
-        alert.messageText = "JM Voicing er ikke helt klar endnu"
+        alert.messageText = "Gramchek er ikke helt klar endnu"
         alert.informativeText = problems.joined(separator: "\n\n")
             + "\n\nÅbn System Settings → Privacy & Security for at give tilladelser, og åbn Indstillinger her i appen for API key. Genstart appen efter du har givet tilladelser."
         alert.alertStyle = .warning
@@ -196,7 +196,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
-        let title = NSMenuItem(title: "JM Voicing", action: nil, keyEquivalent: "")
+        let title = NSMenuItem(title: "Gramchek", action: nil, keyEquivalent: "")
         title.isEnabled = false
         menu.addItem(title)
         menu.addItem(NSMenuItem.separator())
@@ -233,7 +233,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(settingsItem)
 
         menu.addItem(NSMenuItem.separator())
-        let quitItem = NSMenuItem(title: "Afslut JM Voicing", action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Afslut Gramchek", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -266,7 +266,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .processing:   symbolName = "sparkles"
         case .error:        symbolName = "exclamationmark.triangle"
         }
-        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "JM Voicing")
+        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Gramchek")
         button.image?.isTemplate = true
     }
 
@@ -284,7 +284,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "JM Voicing — Indstillinger"
+            window.title = "Gramchek — Indstillinger"
             window.isReleasedWhenClosed = false
             window.center()
             window.setFrameAutosaveName("JMVoicingSettings")

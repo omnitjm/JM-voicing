@@ -54,7 +54,7 @@ struct WelcomeView: View {
                     .frame(width: 42, height: 42)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Velkommen til JM Voicing")
+                    Text("Velkommen til Gramchek")
                         .font(.system(size: 26, weight: .bold))
                     Text("Tre globale genveje, én Anthropic API key.")
                         .font(.body)

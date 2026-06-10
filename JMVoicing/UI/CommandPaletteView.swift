@@ -16,7 +16,7 @@ struct CommandPaletteView: View {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                     .foregroundStyle(.tint)
-                Text(selectedText == nil ? "JM Voicing - kommando" : "Bearbejd markeret tekst")
+                Text(selectedText == nil ? "Gramchek - kommando" : "Bearbejd markeret tekst")
                     .font(.headline)
                 Spacer()
                 Text("⏎ kør   esc luk")

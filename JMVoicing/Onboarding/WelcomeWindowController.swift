@@ -25,7 +25,7 @@ final class WelcomeWindowController {
 
         let hosting = NSHostingController(rootView: view)
         let window = NSWindow(contentViewController: hosting)
-        window.title = "JM Voicing - velkommen"
+        window.title = "Gramchek - velkommen"
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
         window.center()
