@@ -76,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var problems: [String] = []
 
         if !AXIsProcessTrusted() {
-            problems.append("• Accessibility er ikke tilladt. Uden den virker hverken Fn-diktering, ⌃⌥G eller ⌃⌥A.")
+            problems.append("• Accessibility er ikke tilladt. Uden den virker hverken dictation eller tekst-genvejene.")
         }
 
         if AVCaptureDevice.authorizationStatus(for: .audio) == .denied {

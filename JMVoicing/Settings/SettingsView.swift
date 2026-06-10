@@ -122,7 +122,7 @@ struct SettingsView: View {
 
                 permissionRow(
                     title: "Accessibility",
-                    description: "Nødvendig for at lytte efter Fn / ⌃⌥G / ⌃⌥A og indsætte tekst i andre apps.",
+                    description: "Nødvendig for at lytte efter dictation- og tekst-genvejene og indsætte tekst i andre apps.",
                     status: accessibilityStatus,
                     primaryButton: {
                         // requestAccessibility prompter første gang. Hvis allerede afvist

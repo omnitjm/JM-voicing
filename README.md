@@ -5,8 +5,9 @@ En personlig macOS menubar-app (Gramchek) der gør tre ting via globale genveje:
 | Genvej | Funktion |
 |---|---|
 | **Hold Fn / 🌐** | **Diktér** - optager mens du holder tasten. Slip → polerede tekst indsættes ved markøren. Auto-detekterer dansk / engelsk. |
-| **⌃⌥G** | **Tjek grammatik** - marker tekst hvor som helst, tryk genvejen, rettet version erstatter den markerede. Ændrer KUN stavefejl og grammatik - ikke tone eller sprog. |
-| **⌃⌥A** | **AI-kommando** - marker tekst (eller intet), tryk genvejen, skriv en kommando i den lille popup. Fx *"svar høfligt nej med disse punkter: ..."* eller *"oversæt til engelsk"*. |
+| **⌃1** | **Correct grammar** - marker tekst hvor som helst, tryk genvejen, rettet version erstatter den markerede. Ændrer KUN stavefejl og grammatik - ikke tone eller sprog. Virker på dansk og engelsk. |
+| **⌃2** | **Improve** - marker tekst, tryk genvejen. Claude strammer formuleringen op uden at ændre mening, stil eller sprog. |
+| **⌃3** | **AI-kommando** - marker tekst (eller intet), tryk genvejen. Vælg en preset-knap (Correct grammar / Improve clarity) eller skriv en kommando: *"svar høfligt nej…"*, *"oversæt til engelsk"*. |
 
 Alt sker via samme Anthropic API key. Dictation kører transcription on-device gratis via macOS' indbyggede Speech Recognition.
 
@@ -75,15 +76,20 @@ Ellers stjæler systemet Fn-tasten:
 2. **Hold Fn** mens du taler
 3. Slip Fn - efter et par sekunder indsættes den polerede tekst
 
-### ✓ Tjek grammatik (⌃⌥G)
+### ✓ Correct grammar (⌃1)
 1. Marker et stykke tekst i fx Mail, Slack, Notes
-2. Tryk **⌃⌥G**
-3. Den rettede version erstatter dit udvalg. Stavefejl og grammatik er rettet, men din tone, dit ordvalg og dit sprog er bevaret 1:1.
+2. Tryk **⌃1**
+3. Den rettede version erstatter dit udvalg. Stavefejl og grammatik er rettet, men din tone, dit ordvalg og dit sprog er bevaret 1:1. Virker på både dansk og engelsk.
 
-### ✨ AI-kommando (⌃⌥A)
+### ✨ Improve (⌃2)
+1. Marker tekst hvor som helst
+2. Tryk **⌃2**
+3. Claude strammer formuleringen op (kortere, klarere) uden at ændre mening, stil eller sprog. Virker på dansk og engelsk.
+
+### 🪄 AI-kommando (⌃3)
 1. (Valgfrit) Marker tekst først - fx en mail du vil svare på
-2. Tryk **⌃⌥A** - en lille popup vises midt på skærmen
-3. Skriv kommandoen, fx:
+2. Tryk **⌃3** - en lille popup vises midt på skærmen
+3. Vælg en preset-knap (**Correct grammar** / **Improve clarity**) **eller** skriv en kommando, fx:
    - *"svar høfligt nej med disse punkter: jeg er i ferie til 1. juni og kan først tage møder derefter"*
    - *"oversæt til engelsk"*
    - *"gør halvt så langt"*
@@ -96,7 +102,7 @@ Ellers stjæler systemet Fn-tasten:
 
 Filen `JMVoicing/Tone/TonePrompt.swift` indeholder beskrivelsen af din skrivestil. Default er dansk uformel, men du kan redigere `voiceDescription` til hvad som helst - tilføj fx 2-3 eksempler på tekst du selv har skrevet, så kopierer Claude stilen.
 
-Grammar-check (⌃⌥G) bruger IKKE tone-prompten - den ændrer bevidst ikke din stil.
+Correct grammar (⌃1) bruger IKKE tone-prompten - den ændrer bevidst ikke din stil.
 
 ---
 
@@ -151,7 +157,7 @@ Skift `model` i de tre service-filer fra `"claude-opus-4-7"` til `"claude-sonnet
 | Problem | Løsning |
 |---|---|
 | Fn gør ingenting | Step 4 ovenfor - slå macOS-dictation fra. Tjek Accessibility. |
-| ⌃⌥G / ⌃⌥A gør ingenting | Tjek Accessibility-tilladelse. Genvejen virker IKKE før app'en er startet. |
+| ⌃1 / ⌃2 / ⌃3 gør ingenting | Tjek Accessibility-tilladelse. Genvejen virker IKKE før app'en er startet. |
 | "Marker først tekst" når jeg har markeret | Nogle apps tillader ikke ⌘C-via-script. Prøv et almindeligt tekstfelt. |
 | "Manglende Anthropic API key" | Indstillinger → indsæt key |
 | Forkert sprog detekteret i dictation | Tal længere ad gangen - korte sætninger er svære for sprog-detection. |

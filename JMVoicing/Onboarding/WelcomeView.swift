@@ -190,7 +190,7 @@ struct WelcomeView: View {
     private var trySection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Prøv det her").font(.title3).fontWeight(.semibold)
-            Text("Skriv eller ret i teksten herunder og lad Claude polere den med din tone (samme pipeline som ⌃⌥G).")
+            Text("Skriv eller ret i teksten herunder og lad Claude polere den med din tone (samme pipeline som Correct grammar).")
                 .font(.caption).foregroundStyle(.secondary)
 
             TextEditor(text: $demoText)

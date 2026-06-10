@@ -30,21 +30,21 @@ struct ShortcutSpec: Codable, Equatable {
     // MARK: - Defaults
 
     static let defaultGrammar = ShortcutSpec(
-        keyCode: 5,  // G
-        modifiers: UInt32(controlKey | optionKey),
-        label: "G"
-    )
-
-    static let defaultCommand = ShortcutSpec(
-        keyCode: 0,  // A
-        modifiers: UInt32(controlKey | optionKey),
-        label: "A"
+        keyCode: 18,  // 1
+        modifiers: UInt32(controlKey),
+        label: "1"
     )
 
     static let defaultImprove = ShortcutSpec(
-        keyCode: 34,  // I
-        modifiers: UInt32(controlKey | optionKey),
-        label: "I"
+        keyCode: 19,  // 2
+        modifiers: UInt32(controlKey),
+        label: "2"
+    )
+
+    static let defaultCommand = ShortcutSpec(
+        keyCode: 20,  // 3
+        modifiers: UInt32(controlKey),
+        label: "3"
     )
 
     // MARK: - Capture fra NSEvent

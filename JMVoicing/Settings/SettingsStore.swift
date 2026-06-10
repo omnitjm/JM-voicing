@@ -66,6 +66,27 @@ final class SettingsStore: ObservableObject {
         self.improveShortcut = Self.loadShortcut(key: Keys.improveShortcut,
                                                  fallback: .defaultImprove,
                                                  defaults: defaults)
+
+        migrateLegacyShortcutsIfNeeded()
+    }
+
+    // MARK: - Migration
+
+    /// Tidligere defaults (⌃⌥G / ⌃⌥I / ⌃⌥A) var tunge tre-tast-kombinationer.
+    /// Hvis brugeren stadig kører med de gamle defaults, opgrader dem stille til
+    /// de nye to-tast-defaults (⌃1 / ⌃2 / ⌃3). Tilpassede genveje bevares.
+    private func migrateLegacyShortcutsIfNeeded() {
+        guard !defaults.bool(forKey: Keys.simpleShortcutMigrationDone) else { return }
+
+        let legacyGrammar = ShortcutSpec(keyCode: 5, modifiers: 6144, label: "G")  // controlKey|optionKey == 6144
+        let legacyImprove = ShortcutSpec(keyCode: 34, modifiers: 6144, label: "I")
+        let legacyCommand = ShortcutSpec(keyCode: 0, modifiers: 6144, label: "A")
+
+        if grammarShortcut == legacyGrammar { grammarShortcut = .defaultGrammar }
+        if improveShortcut == legacyImprove { improveShortcut = .defaultImprove }
+        if commandShortcut == legacyCommand { commandShortcut = .defaultCommand }
+
+        defaults.set(true, forKey: Keys.simpleShortcutMigrationDone)
     }
 
     // MARK: Reset til defaults
@@ -84,6 +105,7 @@ final class SettingsStore: ObservableObject {
         static let commandShortcut     = "commandShortcut"
         static let improveShortcut     = "improveShortcut"
         static let hasSeenWelcome      = "hasSeenWelcome"
+        static let simpleShortcutMigrationDone = "simpleShortcutMigrationDone"
         // Sentinel-værdi når en nullable shortcut bevidst er fjernet af brugeren.
         static let disabledMarker      = "__disabled__"
     }
