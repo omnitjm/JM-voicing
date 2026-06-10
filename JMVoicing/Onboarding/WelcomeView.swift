@@ -105,6 +105,17 @@ struct WelcomeView: View {
                 howto: "Marker tekst (eller intet), tryk genvejen. Popup spørger om en kommando.",
                 example: "\"oversæt til engelsk\" · \"svar høfligt nej\" · \"gør halvt så langt\""
             )
+
+            HStack(spacing: 6) {
+                Image(systemName: "keyboard")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text("Genvejene er kun forslag - du kan ændre dem til hvad du vil i Indstillinger → Genveje (klik på en genvej og tryk hvilke som helst taster).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 4)
         }
     }
 
