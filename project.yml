@@ -1,6 +1,6 @@
-name: JMVoicing
+name: OmnitGram
 options:
-  bundleIdPrefix: com.jm.voicing
+  bundleIdPrefix: com.omnit
   deploymentTarget:
     macOS: "13.0"
   developmentLanguage: en
@@ -8,25 +8,25 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_STYLE: Automatic
     CODE_SIGN_IDENTITY: "-"
     ENABLE_HARDENED_RUNTIME: YES
     GENERATE_INFOPLIST_FILE: NO
 targets:
-  JMVoicing:
+  OmnitGram:
     type: application
     platform: macOS
     sources:
-      - path: JMVoicing
+      - path: OmnitGram
         excludes:
           - "Info.plist"
-          - "JMVoicing.entitlements"
+          - "OmnitGram.entitlements"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.jm.voicing
-        INFOPLIST_FILE: JMVoicing/Info.plist
-        CODE_SIGN_ENTITLEMENTS: JMVoicing/JMVoicing.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.omnit.omnitgram
+        INFOPLIST_FILE: OmnitGram/Info.plist
+        CODE_SIGN_ENTITLEMENTS: OmnitGram/OmnitGram.entitlements
         ENABLE_APP_SANDBOX: NO
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"

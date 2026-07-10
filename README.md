@@ -1,28 +1,46 @@
-# JM Voicing
+# OmnitGram
 
-En personlig macOS menubar-app der gør tre ting via globale genveje:
+Grammarly for din Mac - men med din egen LLM-nøgle og uden abonnement.
 
-| Genvej | Funktion |
+**Sådan virker den:** Markér tekst i en hvilken som helst app. Tryk en genvej. Den behandlede tekst erstatter automatisk det markerede.
+
+| Genvej (kan ændres) | Handling |
 |---|---|
-| **Hold Fn / 🌐** | **Diktér** - optager mens du holder tasten. Slip → polerede tekst indsættes ved markøren. Auto-detekterer dansk / engelsk. |
-| **⌃⌥G** | **Tjek grammatik** - marker tekst hvor som helst, tryk genvejen, rettet version erstatter den markerede. Ændrer KUN stavefejl og grammatik - ikke tone eller sprog. |
-| **⌃⌥A** | **AI-kommando** - marker tekst (eller intet), tryk genvejen, skriv en kommando i den lille popup. Fx *"svar høfligt nej med disse punkter: ..."* eller *"oversæt til engelsk"*. |
+| **⌃⌥G** | **Ret grammatik** - retter KUN stave- og grammatikfejl. Ændrer aldrig tone, ordvalg eller sprog. |
+| **⌃⌥O** | **Optimér sproget** - retter fejl OG forbedrer flow og klarhed. Bevarer sprog, tone og alt indhold. |
 
-Alt sker via samme Anthropic API key. Dictation kører transcription on-device gratis via macOS' indbyggede Speech Recognition.
-
----
-
-## Installer (nem version)
-
-1. Gå til **[Actions-fanen på GitHub](https://github.com/omnitjm/JM-voicing/actions)** og åbn det seneste grønne "Build .app"-run.
-2. Scroll til "Artifacts" → klik **JMVoicing-app** → en `.zip` downloades.
-3. Unzip → træk `JMVoicing.app` ind i `/Applications`.
-4. Første gang du åbner den: **højre-klik på app'en → Open** (ikke dobbeltklik). macOS spørger om du er sikker - klik Open. Du skal kun gøre det denne ene gang.
-5. App'en lever i menu baren - kig efter et lille mikrofon-ikon 🎤 øverst på skærmen.
+Virker på **dansk og engelsk** (sproget detekteres automatisk - dansk forbliver dansk, engelsk forbliver engelsk). Du vælger selv LLM-udbyder: **Anthropic (Claude)** eller **OpenAI (GPT)** med din egen API-nøgle.
 
 ---
 
-## Installer (fra source - hvis du vil rette i koden)
+## Installér (2 minutter)
+
+1. Gå til **[Actions-fanen](https://github.com/omnitjm/JM-voicing/actions)** → åbn det nyeste grønne ✅ "Build .app"-run
+2. Scroll ned til **Artifacts** → klik **OmnitGram-app** → en zip downloades
+3. Unzip → træk `OmnitGram.app` til **Applications**
+4. **Højre-klik → Open** første gang (ad-hoc signeret app)
+5. Find ✓-ikonet i menubaren
+
+## Sæt op (3 minutter)
+
+1. **API-nøgle**: Klik menubar-ikonet → **Indstillinger…** → vælg udbyder → indsæt nøgle
+   - Anthropic: [console.anthropic.com](https://console.anthropic.com) → Billing (læg fx $5 ind) → API keys → Create Key
+   - OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. **Accessibility-tilladelse**: macOS spørger første gang du bruger en genvej. Ellers: System Settings → Privacy & Security → Accessibility → tilføj OmnitGram.
+
+## Brug
+
+1. Skriv noget i Mail, Slack, Notion, browseren - hvor som helst
+2. **Markér teksten**
+3. Tryk **⌃⌥G** (ret grammatik) eller **⌃⌥O** (optimér sproget)
+4. Vent 1-2 sekunder → det markerede erstattes af den behandlede version
+5. Hører du bare et "Tink" var teksten allerede korrekt - intet blev ændret
+
+Begge handlinger kan også køres fra menubar-menuen, og genvejene kan ændres frit i Indstillinger (klik på genvejs-chippen og tryk en ny kombination).
+
+---
+
+## Byg selv fra source
 
 ```bash
 brew install xcodegen
@@ -30,135 +48,42 @@ git clone https://github.com/omnitjm/JM-voicing.git
 cd JM-voicing
 git checkout claude/voice-dictation-mac-pcebx
 xcodegen generate
-open JMVoicing.xcodeproj
+open OmnitGram.xcodeproj   # vælg dit Apple ID under Signing, tryk ⌘R
 ```
-
-I Xcode: vælg dit Apple ID som signing team under **Signing & Capabilities**, tryk **⌘R**.
-
----
-
-## Setup (5 minutter, første gang)
-
-### 1. Anthropic API key
-
-1. Gå til **https://console.anthropic.com**, log ind (eller opret konto - den er separat fra Claude.ai)
-2. Billing → Add payment method → læg fx $5-10 ind
-3. Settings → API keys → Create Key
-4. Kopier nøglen (`sk-ant-...`)
-
-### 2. Indsæt nøglen i JM Voicing
-
-Klik på mikrofon-ikonet i menu baren → **Indstillinger…** → indsæt nøglen. Den gemmes i Keychain.
-
-### 3. Giv tilladelser
-
-Når macOS spørger første gang, accepter:
-- **Microphone** - til at høre dig diktere
-- **Speech Recognition** - til on-device tale → tekst
-- **Accessibility** - til at lytte efter Fn og indsætte tekst i andre apps
-
-Hvis du ikke får prompts: åbn **System Settings → Privacy & Security** og tilføj JM Voicing manuelt under hver kategori.
-
-### 4. Slå macOS' indbyggede Fn-dictation FRA
-
-Ellers stjæler systemet Fn-tasten:
-
-- **System Settings → Keyboard → Dictation: Off**
-- **System Settings → Keyboard → Press 🌐 key to: Do Nothing**
-
----
-
-## Sådan bruger du de tre features
-
-### 🎤 Diktér (Hold Fn)
-1. Klik et tekstfelt i hvilken som helst app
-2. **Hold Fn** mens du taler
-3. Slip Fn - efter et par sekunder indsættes den polerede tekst
-
-### ✓ Tjek grammatik (⌃⌥G)
-1. Marker et stykke tekst i fx Mail, Slack, Notes
-2. Tryk **⌃⌥G**
-3. Den rettede version erstatter dit udvalg. Stavefejl og grammatik er rettet, men din tone, dit ordvalg og dit sprog er bevaret 1:1.
-
-### ✨ AI-kommando (⌃⌥A)
-1. (Valgfrit) Marker tekst først - fx en mail du vil svare på
-2. Tryk **⌃⌥A** - en lille popup vises midt på skærmen
-3. Skriv kommandoen, fx:
-   - *"svar høfligt nej med disse punkter: jeg er i ferie til 1. juni og kan først tage møder derefter"*
-   - *"oversæt til engelsk"*
-   - *"gør halvt så langt"*
-   - *"skriv en kort takke-besked"*
-4. Tryk **Enter** - resultatet indsættes ved markøren (eller erstatter dit udvalg)
-
----
-
-## Tilpas din tone (kun dictation-polering)
-
-Filen `JMVoicing/Tone/TonePrompt.swift` indeholder beskrivelsen af din skrivestil. Default er dansk uformel, men du kan redigere `voiceDescription` til hvad som helst - tilføj fx 2-3 eksempler på tekst du selv har skrevet, så kopierer Claude stilen.
-
-Grammar-check (⌃⌥G) bruger IKKE tone-prompten - den ændrer bevidst ikke din stil.
-
----
 
 ## Arkitektur
 
 ```
-JMVoicingApp.swift                  # SwiftUI entry point
-AppDelegate.swift                   # Menu bar + alle hotkeys
-DictationCoordinator.swift          # Fn flow: optag → transcriber → polér → indsæt
-SelectionActionCoordinator.swift    # ⌃⌥G & ⌃⌥A flows
+OmnitGramApp.swift               # SwiftUI entry point
+AppDelegate.swift                # Menubar, hotkey-registrering, settings-observation
+SelectionActionCoordinator.swift # Flow: læs markering → LLM → erstat
 
 Managers/
-  HotkeyManager.swift               # Fn-listener via CGEventTap
-  GlobalHotkey.swift                # ⌃⌥G og ⌃⌥A via Carbon RegisterEventHotKey
-  AudioRecorder.swift               # AVAudioRecorder → m4a
-  SelectionService.swift            # Læs markeret tekst via simuleret ⌘C
-  TextInserter.swift                # Indsæt via pasteboard + simuleret ⌘V
+  GlobalHotkey.swift             # Carbon RegisterEventHotKey (globale genveje)
+  SelectionService.swift         # Læs markeret tekst (gem/⌘C/gendan pasteboard)
+  TextInserter.swift             # Indsæt resultat (pasteboard + simuleret ⌘V)
 
 Services/
-  NativeSpeechService.swift         # SFSpeechRecognizer (da-DK + en-US parallelt)
-  ClaudeService.swift               # Dictation polering (tone-tilpasset)
-  GrammarCheckService.swift         # Streng grammatik-tjek (bevarer tone)
-  InlineCommandService.swift        # AI-kommando med markeret tekst som kontekst
-
-UI/
-  CommandPaletteView.swift          # SwiftUI popup-UI
-  CommandPaletteController.swift    # NSPanel-wrapper (floating, non-activating)
+  LLMService.swift               # Provider-abstraktion: Anthropic + OpenAI, 2 modes
 
 Settings/
-  SettingsStore.swift               # API key i Keychain, prefs i UserDefaults
-  SettingsView.swift                # SwiftUI Settings-vindue
-
-Tone/
-  TonePrompt.swift                  # Din skrivestil (kun til dictation)
+  SettingsStore.swift            # Nøgler i Keychain (én pr. udbyder), prefs i UserDefaults
+  SettingsView.swift             # Udbyder, nøgle, model, genveje
+  ShortcutSpec.swift             # Genvejs-model (Codable)
+  ShortcutRecorderView.swift     # "Tryk taster…"-recorder
 ```
-
-Alle Claude-kald bruger `claude-opus-4-7` med `effort: "max"` for bedste kvalitet, prompt-caching på system-prompten for at minimere omkostninger ved gentagne kald.
-
----
 
 ## Omkostninger
 
-- **Transcription**: gratis (on-device, kører på din Mac)
-- **Claude Opus 4.7**: $5/M input, $25/M output. Med caching og max effort er typisk dictation ~$0.02-0.05, grammar-check ~$0.01, AI-kommando ~$0.05-0.20 afhængigt af længde.
-
-Skift `model` i de tre service-filer fra `"claude-opus-4-7"` til `"claude-sonnet-4-6"` hvis du vil halvere prisen mod let lavere kvalitet, eller `"claude-haiku-4-5"` for 5x billigere.
-
----
+Du betaler kun for det du bruger via din egen API-nøgle. En typisk rettelse af et afsnit koster under 1 øre med Claude Opus / GPT-4o - og endnu mindre med billigere modeller (skift model i Indstillinger, fx `claude-haiku-4-5` eller `gpt-4o-mini`).
 
 ## Fejlfinding
 
 | Problem | Løsning |
 |---|---|
-| Fn gør ingenting | Step 4 ovenfor - slå macOS-dictation fra. Tjek Accessibility. |
-| ⌃⌥G / ⌃⌥A gør ingenting | Tjek Accessibility-tilladelse. Genvejen virker IKKE før app'en er startet. |
-| "Marker først tekst" når jeg har markeret | Nogle apps tillader ikke ⌘C-via-script. Prøv et almindeligt tekstfelt. |
-| "Manglende Anthropic API key" | Indstillinger → indsæt key |
-| Forkert sprog detekteret i dictation | Tal længere ad gangen - korte sætninger er svære for sprog-detection. |
-| macOS siger "kan ikke åbne fordi udvikler ikke kan verificeres" | Højre-klik → Open. Eller terminal: `xattr -dr com.apple.quarantine /Applications/JMVoicing.app` |
-
----
-
-## Licens
-
-Personligt projekt - brug det som du vil.
+| Genvejen gør ingenting | Accessibility-tilladelse mangler. System Settings → Privacy & Security → Accessibility → OmnitGram. |
+| "Marker først den tekst…" | Nogle felter tillader ikke programmatisk kopiering. Prøv et almindeligt tekstfelt. |
+| "Manglende API-nøgle" | Indstillinger → indsæt nøgle for den valgte udbyder. |
+| Fejl 401 | Nøglen er forkert eller udløbet - lav en ny. |
+| Fejl 402/403 | Læg penge på kontoen hos udbyderen. |
+| macOS: "kan ikke åbnes…" | Højre-klik → Open. Eller: `xattr -dr com.apple.quarantine /Applications/OmnitGram.app` |

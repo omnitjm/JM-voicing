@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 @main
-struct JMVoicingApp: App {
+struct OmnitGramApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

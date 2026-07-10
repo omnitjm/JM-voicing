@@ -2,74 +2,88 @@ import Foundation
 import Combine
 import Security
 
-/// Brugerindstillinger. API key gemmes i Keychain. Genveje og prefs i UserDefaults.
+/// Brugerindstillinger. API-nøgler gemmes i Keychain (én pr. udbyder).
+/// Udbydervalg, model og genveje i UserDefaults.
 final class SettingsStore: ObservableObject {
-    private let keychainService = "com.jm.voicing"
-    private let anthropicAccount = "anthropic_api_key"
+    private let keychainService = "com.omnit.omnitgram"
     private let defaults = UserDefaults.standard
 
-    // MARK: Keychain - API key
+    // MARK: LLM-udbyder
 
-    @Published var anthropicApiKey: String {
-        didSet { saveKeychain(account: anthropicAccount, value: anthropicApiKey) }
+    @Published var provider: LLMProvider {
+        didSet {
+            defaults.set(provider.rawValue, forKey: Keys.provider)
+            // Skift til den gemte nøgle/model for den nye udbyder.
+            apiKey = Self.loadKeychain(service: keychainService, account: provider.rawValue) ?? ""
+            model = defaults.string(forKey: Keys.modelPrefix + provider.rawValue) ?? provider.defaultModel
+        }
     }
 
-    // MARK: Toggles
+    /// Nøglen for den AKTUELT valgte udbyder. Gemmes pr. udbyder i Keychain,
+    /// så man kan skifte frem og tilbage uden at miste noget.
+    @Published var apiKey: String {
+        didSet { saveKeychain(account: provider.rawValue, value: apiKey) }
+    }
 
-    @Published var enableGrammarPolish: Bool {
-        didSet { defaults.set(enableGrammarPolish, forKey: Keys.enableGrammarPolish) }
+    /// Modelnavn for den aktuelt valgte udbyder.
+    @Published var model: String {
+        didSet {
+            let trimmed = model.trimmingCharacters(in: .whitespaces)
+            defaults.set(trimmed.isEmpty ? provider.defaultModel : trimmed,
+                         forKey: Keys.modelPrefix + provider.rawValue)
+        }
     }
 
     // MARK: Genveje
 
-    @Published var dictationTrigger: DictationTrigger {
-        didSet {
-            defaults.set(dictationTrigger.rawValue, forKey: Keys.dictationTrigger)
-        }
-    }
-
-    /// nil = ingen genvej for grammar-tjek (slået fra).
+    /// nil = genvejen er slået fra.
     @Published var grammarShortcut: ShortcutSpec? {
         didSet { saveShortcut(grammarShortcut, key: Keys.grammarShortcut) }
     }
 
-    /// nil = ingen genvej for AI-kommando palette (slået fra).
-    @Published var commandShortcut: ShortcutSpec? {
-        didSet { saveShortcut(commandShortcut, key: Keys.commandShortcut) }
+    @Published var improveShortcut: ShortcutSpec? {
+        didSet { saveShortcut(improveShortcut, key: Keys.improveShortcut) }
     }
 
     // MARK: Init
 
     init() {
-        self.anthropicApiKey = Self.loadKeychain(service: "com.jm.voicing", account: "anthropic_api_key") ?? ""
-        self.enableGrammarPolish = defaults.object(forKey: Keys.enableGrammarPolish) as? Bool ?? true
-
-        let trigRaw = defaults.string(forKey: Keys.dictationTrigger) ?? DictationTrigger.fn.rawValue
-        self.dictationTrigger = DictationTrigger(rawValue: trigRaw) ?? .fn
+        let provRaw = defaults.string(forKey: Keys.provider) ?? LLMProvider.anthropic.rawValue
+        let prov = LLMProvider(rawValue: provRaw) ?? .anthropic
+        self.provider = prov
+        self.apiKey = Self.loadKeychain(service: "com.omnit.omnitgram", account: prov.rawValue) ?? ""
+        self.model = defaults.string(forKey: Keys.modelPrefix + prov.rawValue) ?? prov.defaultModel
 
         self.grammarShortcut = Self.loadShortcut(key: Keys.grammarShortcut,
                                                  fallback: .defaultGrammar,
                                                  defaults: defaults)
-        self.commandShortcut = Self.loadShortcut(key: Keys.commandShortcut,
-                                                 fallback: .defaultCommand,
+        self.improveShortcut = Self.loadShortcut(key: Keys.improveShortcut,
+                                                 fallback: .defaultImprove,
                                                  defaults: defaults)
     }
 
-    // MARK: Reset til defaults
+    func resetShortcuts() {
+        grammarShortcut = .defaultGrammar
+        improveShortcut = .defaultImprove
+    }
 
-    func resetGrammarShortcut() { grammarShortcut = .defaultGrammar }
-    func resetCommandShortcut() { commandShortcut = .defaultCommand }
-    func resetDictationTrigger() { dictationTrigger = .fn }
+    func resetModel() {
+        model = provider.defaultModel
+    }
+
+    /// Klar-til-brug service med de aktuelle indstillinger.
+    func makeService() -> LLMService {
+        LLMService(provider: provider, apiKey: apiKey, model: model)
+    }
 
     // MARK: - UserDefaults keys
 
     private enum Keys {
-        static let enableGrammarPolish = "enableGrammarPolish"
-        static let dictationTrigger    = "dictationTrigger"
-        static let grammarShortcut     = "grammarShortcut"
-        static let commandShortcut     = "commandShortcut"
-        // Sentinel-værdi når en nullable shortcut bevidst er fjernet af brugeren.
-        static let disabledMarker      = "__disabled__"
+        static let provider        = "llmProvider"
+        static let modelPrefix     = "llmModel_"
+        static let grammarShortcut = "grammarShortcut"
+        static let improveShortcut = "improveShortcut"
+        static let disabledMarker  = "__disabled__"
     }
 
     // MARK: - Shortcut persistence
@@ -80,7 +94,6 @@ final class SettingsStore: ObservableObject {
                 defaults.set(data, forKey: key)
             }
         } else {
-            // Markér eksplicit som "fra" så vi ikke loader default ved næste start.
             defaults.set(Keys.disabledMarker, forKey: key)
         }
     }
