@@ -21,6 +21,10 @@ enum SelectionService {
             return copy
         } ?? []
 
+        // Lad brugeren slippe genvejens modifier-taster, ellers bliver vores
+        // simulerede ⌘C til fx ⌃⌥⌘C i nogle apps.
+        try? await Task.sleep(nanoseconds: 150_000_000)
+
         // Simulér ⌘C
         simulateCmdC()
 

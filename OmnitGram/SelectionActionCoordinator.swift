@@ -3,7 +3,8 @@ import Foundation
 import Combine
 
 /// Kernen i OmnitGram: læs markeret tekst → kør LLM-action → erstat det markerede.
-@MainActor
+/// Alle offentlige metoder kaldes på main-tråden (hotkey-handlers og menu-items
+/// dispatches dertil), og alt UI-arbejde hopper eksplicit tilbage til main.
 final class SelectionActionCoordinator: ObservableObject {
     enum State {
         case idle
@@ -14,64 +15,75 @@ final class SelectionActionCoordinator: ObservableObject {
     @Published private(set) var state: State = .idle
 
     private let settingsStore: SettingsStore
-    private var busy = false
+    private var busy = false  // læses/skrives kun på main
 
     init(settingsStore: SettingsStore) {
         self.settingsStore = settingsStore
     }
 
-    /// ⌃⌥G - ret grammatik (kun fejl, aldrig omskrivning).
+    /// Ret grammatik - kun fejl, aldrig omskrivning.
     func runGrammarFix() {
-        run(action: .fixGrammar)
+        run(.fixGrammar)
     }
 
-    /// ⌃⌥O - optimér sproget (klarere og mere flydende, samme sprog og tone).
+    /// Optimér sproget - klarere og mere flydende, samme sprog og tone.
     func runImprove() {
-        run(action: .improveLanguage)
+        run(.improveLanguage)
     }
 
     // MARK: - Fælles flow
 
-    private func run(action: TextAction) {
-        // Ignorér dobbelt-tryk mens vi allerede arbejder.
+    private struct FlowError: LocalizedError {
+        let message: String
+        var errorDescription: String? { message }
+    }
+
+    private func run(_ action: TextAction) {
         guard !busy else { return }
 
-        Task { @MainActor in
-            guard !settingsStore.apiKey.trimmingCharacters(in: .whitespaces).isEmpty else {
-                presentAlert("Manglende API-nøgle til \(settingsStore.provider.displayName). Åbn Indstillinger og tilføj den.")
-                return
-            }
+        let apiKey = settingsStore.apiKey.trimmingCharacters(in: .whitespaces)
+        guard !apiKey.isEmpty else {
+            presentAlert("Manglende API-nøgle til \(settingsStore.provider.displayName). Åbn Indstillinger og tilføj den.")
+            return
+        }
 
-            guard let selected = await SelectionService.readSelectedText() else {
-                presentAlert("Marker først den tekst du vil have behandlet, og prøv igen.")
-                return
-            }
+        busy = true
+        state = .working
+        let service = settingsStore.makeService()
 
-            busy = true
-            state = .working
-            defer {
-                busy = false
-                if state == .working { state = .idle }
-            }
-
+        Task { [weak self] in
+            var failure: String?
             do {
-                let service = settingsStore.makeService()
-                let result = try await service.run(action, on: selected)
-
-                if result == selected {
-                    // Ingen ændringer nødvendige - diskret lyd, rør ikke ved teksten.
-                    NSSound(named: "Tink")?.play()
-                    return
+                guard let selected = await SelectionService.readSelectedText() else {
+                    throw FlowError(message: "Marker først den tekst du vil have behandlet, og prøv igen.")
                 }
-
-                TextInserter.insert(result)
-                NSSound(named: "Pop")?.play()
+                let result = try await service.run(action, on: selected)
+                await MainActor.run {
+                    if result == selected {
+                        // Allerede korrekt - diskret lyd, rør ikke ved teksten.
+                        NSSound(named: "Tink")?.play()
+                    } else {
+                        TextInserter.insert(result)
+                        NSSound(named: "Pop")?.play()
+                    }
+                }
             } catch {
-                presentAlert(error.localizedDescription)
+                failure = error.localizedDescription
+            }
+
+            let message = failure
+            await MainActor.run {
+                guard let self else { return }
+                self.busy = false
+                self.state = .idle
+                if let message {
+                    self.presentAlert(message)
+                }
             }
         }
     }
 
+    /// Skal kaldes på main.
     private func presentAlert(_ message: String) {
         state = .error
         let alert = NSAlert()

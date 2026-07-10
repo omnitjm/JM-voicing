@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Combine
+import ApplicationServices
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let settingsStore = SettingsStore()
