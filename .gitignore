@@ -23,3 +23,10 @@ Package.resolved
 # Local env
 .env
 *.local
+
+# Python
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec
