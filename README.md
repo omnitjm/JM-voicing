@@ -1,32 +1,41 @@
 # OmnitGram
 
-Grammarly for din Mac - men med din egen LLM-nøgle og uden abonnement.
+Grammarly til **Mac og Windows** - men med din egen LLM-nøgle og uden abonnement.
 
 **Sådan virker den:** Markér tekst i en hvilken som helst app. Tryk en genvej. Den behandlede tekst erstatter automatisk det markerede.
 
-| Genvej (kan ændres) | Handling |
+| Genvej (kan ændres i Indstillinger) | Handling |
 |---|---|
-| **⌃⌥G** | **Ret grammatik** - retter KUN stave- og grammatikfejl. Ændrer aldrig tone, ordvalg eller sprog. |
-| **⌃⌥O** | **Optimér sproget** - retter fejl OG forbedrer flow og klarhed. Bevarer sprog, tone og alt indhold. |
+| Mac **⌃⌥G** / Windows **Ctrl+Alt+G** | **Ret grammatik** - retter KUN stave- og grammatikfejl. Ændrer aldrig tone, ordvalg eller sprog. |
+| Mac **⌃⌥O** / Windows **Ctrl+Alt+O** | **Optimér sproget** - retter fejl OG forbedrer flow og klarhed. Bevarer sprog, tone og alt indhold. |
 
 Virker på **dansk og engelsk** (sproget detekteres automatisk - dansk forbliver dansk, engelsk forbliver engelsk). Du vælger selv LLM-udbyder: **Anthropic (Claude)** eller **OpenAI (GPT)** med din egen API-nøgle.
 
 ---
 
-## Installér (2 minutter)
+## Installér på Mac (2 minutter)
 
-1. Gå til **[Actions-fanen](https://github.com/omnitjm/JM-voicing/actions)** → åbn det nyeste grønne ✅ "Build .app"-run
-2. Scroll ned til **Artifacts** → klik **OmnitGram-app** → en zip downloades
+1. Gå til **[Actions-fanen](https://github.com/omnitjm/JM-voicing/actions)** → åbn det nyeste grønne ✅ "Build apps"-run
+2. Scroll ned til **Artifacts** → klik **OmnitGram-mac** → en zip downloades
 3. Unzip → træk `OmnitGram.app` til **Applications**
 4. **Højre-klik → Open** første gang (ad-hoc signeret app)
 5. Find ✓-ikonet i menubaren
 
-## Sæt op (3 minutter)
+## Installér på Windows (2 minutter)
 
-1. **API-nøgle**: Klik menubar-ikonet → **Indstillinger…** → vælg udbyder → indsæt nøgle
+1. Samme Actions-run → **Artifacts** → klik **OmnitGram-windows**
+2. Unzip → læg `OmnitGram.exe` hvor du vil (fx i Dokumenter)
+3. Dobbeltklik. Windows SmartScreen advarer første gang → klik **More info → Run anyway**
+4. Find det grønne G-ikon i system tray (nederst til højre)
+5. Vil du have den til at starte med Windows: læg en genvej i `shell:startup`-mappen (Win+R → skriv `shell:startup`)
+
+## Sæt op (3 minutter, begge platforme)
+
+1. **API-nøgle**: Klik tray/menubar-ikonet → **Indstillinger…** → vælg udbyder → indsæt nøgle
    - Anthropic: [console.anthropic.com](https://console.anthropic.com) → Billing (læg fx $5 ind) → API keys → Create Key
    - OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. **Accessibility-tilladelse**: macOS spørger første gang du bruger en genvej. Ellers: System Settings → Privacy & Security → Accessibility → tilføj OmnitGram.
+2. **Kun Mac - Accessibility-tilladelse**: macOS spørger første gang du bruger en genvej. Ellers: System Settings → Privacy & Security → Accessibility → tilføj OmnitGram.
+3. **Genveje**: Kan omprogrammeres frit i Indstillinger på begge platforme - klik/Optag og tryk den nye kombination.
 
 ## Brug
 
@@ -53,6 +62,8 @@ open OmnitGram.xcodeproj   # vælg dit Apple ID under Signing, tryk ⌘R
 
 ## Arkitektur
 
+**Mac** (Swift/AppKit, `OmnitGram/`):
+
 ```
 OmnitGramApp.swift               # SwiftUI entry point
 AppDelegate.swift                # Menubar, hotkey-registrering, settings-observation
@@ -72,6 +83,13 @@ Settings/
   ShortcutSpec.swift             # Genvejs-model (Codable)
   ShortcutRecorderView.swift     # "Tryk taster…"-recorder
 ```
+
+**Windows** (Python, `windows/omnitgram.py` - bygges til standalone `OmnitGram.exe` med PyInstaller):
+
+- System tray-ikon (pystray) med de samme to handlinger + Indstillinger
+- Globale genveje via `keyboard`-biblioteket, omprogrammerbare i Indstillinger (Optag-knap)
+- Samme clipboard-flow: gem → Ctrl+C → LLM → Ctrl+V → gendan
+- API-nøgle i Windows Credential Manager (keyring), config i `%APPDATA%/OmnitGram/`
 
 ## Omkostninger
 

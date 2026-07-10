@@ -1,4 +1,4 @@
-name: Build .app
+name: Build apps
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-mac:
     runs-on: macos-15
     timeout-minutes: 25
 
@@ -56,18 +56,57 @@ jobs:
       - name: Zip
         run: |
           cd "$(dirname '${{ steps.locate.outputs.app }}')"
-          ditto -c -k --sequesterRsrc --keepParent OmnitGram.app "$GITHUB_WORKSPACE/OmnitGram.zip"
+          ditto -c -k --sequesterRsrc --keepParent OmnitGram.app "$GITHUB_WORKSPACE/OmnitGram-mac.zip"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OmnitGram-app
-          path: OmnitGram.zip
+          name: OmnitGram-mac
+          path: OmnitGram-mac.zip
           retention-days: 90
 
       - name: Attach to release (tag pushes only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: OmnitGram.zip
+          files: OmnitGram-mac.zip
+          generate_release_notes: true
+
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r windows/requirements.txt pyinstaller
+
+      - name: Build OmnitGram.exe
+        run: |
+          pyinstaller --onefile --noconsole --name OmnitGram windows/omnitgram.py
+
+      - name: Zip
+        run: Compress-Archive -Path dist/OmnitGram.exe -DestinationPath OmnitGram-windows.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmnitGram-windows
+          path: OmnitGram-windows.zip
+          retention-days: 90
+
+      - name: Attach to release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: OmnitGram-windows.zip
           generate_release_notes: true
