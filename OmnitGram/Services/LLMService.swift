@@ -53,6 +53,7 @@ struct LLMService {
         case missingApiKey
         case http(Int, String)
         case decode
+        case truncated
 
         var errorDescription: String? {
             switch self {
@@ -69,6 +70,8 @@ struct LLMService {
                 return "Fejl fra udbyderen (\(code)). \(hint)\n\(body.prefix(300))"
             case .decode:
                 return "Kunne ikke læse svaret fra udbyderen."
+            case .truncated:
+                return "Teksten er for lang til at blive behandlet i ét hug. Markér en mindre del ad gangen - intet blev ændret."
             }
         }
     }
@@ -187,9 +190,14 @@ struct LLMService {
         struct AnthropicResponse: Decodable {
             struct Block: Decodable { let type: String; let text: String? }
             let content: [Block]
+            let stop_reason: String?
         }
         guard let decoded = try? JSONDecoder().decode(AnthropicResponse.self, from: data) else {
             throw LLMError.decode
+        }
+        // Afkortet svar må ALDRIG pastes - hellere fejle tydeligt.
+        if decoded.stop_reason == "max_tokens" {
+            throw LLMError.truncated
         }
         return decoded.content.first(where: { $0.type == "text" })?.text ?? ""
     }
@@ -219,12 +227,19 @@ struct LLMService {
         }
 
         struct OpenAIResponse: Decodable {
-            struct Choice: Decodable { let message: Message }
+            struct Choice: Decodable {
+                let message: Message
+                let finish_reason: String?
+            }
             struct Message: Decodable { let content: String }
             let choices: [Choice]
         }
         guard let decoded = try? JSONDecoder().decode(OpenAIResponse.self, from: data) else {
             throw LLMError.decode
+        }
+        // Afkortet svar må ALDRIG pastes - hellere fejle tydeligt.
+        if decoded.choices.first?.finish_reason == "length" {
+            throw LLMError.truncated
         }
         return decoded.choices.first?.message.content ?? ""
     }

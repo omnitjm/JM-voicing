@@ -173,7 +173,10 @@ def call_llm(cfg: dict, system_prompt: str, text: str) -> str:
         )
         if resp.status_code != 200:
             raise RuntimeError(f"Anthropic-fejl ({resp.status_code}): {resp.text[:300]}")
-        blocks = resp.json().get("content", [])
+        body = resp.json()
+        if body.get("stop_reason") == "max_tokens":
+            raise RuntimeError("Teksten er for lang - markér en mindre del ad gangen. Intet blev ændret.")
+        blocks = body.get("content", [])
         out = next((b.get("text", "") for b in blocks if b.get("type") == "text"), "")
     else:
         resp = requests.post(
@@ -194,6 +197,8 @@ def call_llm(cfg: dict, system_prompt: str, text: str) -> str:
         if resp.status_code != 200:
             raise RuntimeError(f"OpenAI-fejl ({resp.status_code}): {resp.text[:300]}")
         choices = resp.json().get("choices", [])
+        if choices and choices[0].get("finish_reason") == "length":
+            raise RuntimeError("Teksten er for lang - markér en mindre del ad gangen. Intet blev ændret.")
         out = choices[0]["message"]["content"] if choices else ""
 
     out = out.strip()
