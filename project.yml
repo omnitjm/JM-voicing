@@ -30,3 +30,17 @@ targets:
         CODE_SIGN_ENTITLEMENTS: OmnitGram/OmnitGram.entitlements
         ENABLE_APP_SANDBOX: NO
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+    scheme: {}
+
+  # CLI-testværktøj der deler produktions-koden for OS-integrationslaget.
+  OmnitGramE2E:
+    type: tool
+    platform: macOS
+    sources:
+      - path: mac-tests
+      - path: OmnitGram/Managers/SelectionService.swift
+      - path: OmnitGram/Managers/TextInserter.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.omnit.omnitgram.e2e
+    scheme: {}

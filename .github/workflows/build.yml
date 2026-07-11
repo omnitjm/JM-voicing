@@ -66,6 +66,54 @@ jobs:
           echo "App alive after 10s - OK"
           kill "$PID" || true
 
+      - name: Build E2E tool (shares production SelectionService/TextInserter)
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project OmnitGram.xcodeproj \
+            -scheme OmnitGramE2E \
+            -configuration Release \
+            -derivedDataPath build \
+            -destination 'platform=macOS,arch=arm64' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          codesign --force --sign - build/Build/Products/Release/OmnitGramE2E
+
+      - name: Grant Accessibility to E2E tool (runner has SIP disabled)
+        run: |
+          BIN="$PWD/build/Build/Products/Release/OmnitGramE2E"
+          sudo python3 - "$BIN" <<'PY' || echo "::warning::TCC grant failed - E2E will self-skip"
+          import sqlite3, sys, time
+          db = "/Library/Application Support/com.apple.TCC/TCC.db"
+          binpath = sys.argv[1]
+          conn = sqlite3.connect(db)
+          cols = [r[1] for r in conn.execute("PRAGMA table_info(access)")]
+          known = {
+              "service": "kTCCServiceAccessibility",
+              "client": binpath,
+              "client_type": 1,  # 1 = path (unbundled binary)
+              "auth_value": 2,   # 2 = allowed
+              "auth_reason": 4,
+              "auth_version": 1,
+              "indirect_object_identifier": "UNUSED",
+              "indirect_object_identifier_type": 0,
+              "flags": 0,
+              "last_modified": int(time.time()),
+          }
+          row = [known.get(c) for c in cols]
+          ph = ",".join("?" for _ in cols)
+          conn.execute(f"INSERT OR REPLACE INTO access ({','.join(cols)}) VALUES ({ph})", row)
+          conn.commit()
+          print(f"Granted accessibility to {binpath}")
+          PY
+          sudo pkill -f tccd || true
+          sleep 2
+
+      - name: E2E test - real Cmd+C/Cmd+V through the OS against a live NSTextView
+        run: ./build/Build/Products/Release/OmnitGramE2E
+
       - name: Zip
         run: |
           cd "$(dirname '${{ steps.locate.outputs.app }}')"
