@@ -21,7 +21,7 @@ import sys
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
 import keyboard   # globale hotkeys + simulerede tastetryk
 import pyperclip  # clipboard
@@ -202,6 +202,16 @@ def call_llm(cfg: dict, system_prompt: str, text: str) -> str:
 
 # ---------------------------------------------------------------- selection
 
+def release_modifiers() -> None:
+    """Send key-up for evt. fysisk holdte modifiers, så vores simulerede
+    Ctrl+C ikke bliver til fx Ctrl+Alt+C mens brugeren stadig holder genvejen."""
+    for mod in ("ctrl", "alt", "shift", "windows"):
+        try:
+            keyboard.release(mod)
+        except Exception:
+            pass
+
+
 def read_selection() -> str | None:
     """Gem clipboard, simuler Ctrl+C, læs, gendan. None hvis intet markeret."""
     try:
@@ -215,7 +225,8 @@ def read_selection() -> str | None:
     except Exception:
         pass
 
-    time.sleep(0.15)  # lad brugeren slippe hotkey-modifiers
+    time.sleep(0.15)  # lad brugeren nå at slippe hotkey'en
+    release_modifiers()
     keyboard.send("ctrl+c")
 
     text = None
@@ -249,6 +260,7 @@ def paste_text(text: str) -> None:
 
     pyperclip.copy(text)
     time.sleep(0.1)
+    release_modifiers()
     keyboard.send("ctrl+v")
 
     def restore():
@@ -275,6 +287,16 @@ class OmnitGramApp:
 
         self.register_hotkeys()
         self.start_tray()
+
+        # Første-gangs-hjælp: vis hvordan appen bruges, og guide til API-nøgle.
+        def first_run_hint():
+            time.sleep(2)
+            if not get_api_key(self.cfg):
+                self.notify("Velkommen! Højreklik ikonet → Indstillinger og indsæt din API-nøgle.")
+            else:
+                self.notify(f"Klar. Markér tekst og tryk {self.cfg['hotkey_grammar']} (ret grammatik) "
+                            f"eller {self.cfg['hotkey_improve']} (optimér sprog).")
+        threading.Thread(target=first_run_hint, daemon=True).start()
 
     # ------------------------------------------------------------ hotkeys
 

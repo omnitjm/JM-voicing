@@ -27,8 +27,9 @@ enum TextInserter {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             simulateCmdV()
 
-            // Gendan pasteboard efter pastet er sket.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            // Gendan pasteboard efter pastet er sket. Rundhåndet delay så
+            // langsomme apps (Electron, browsere) når at læse vores tekst først.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 pasteboard.clearContents()
                 if !savedItems.isEmpty {
                     pasteboard.writeObjects(savedItems)

@@ -55,7 +55,14 @@ final class SelectionActionCoordinator: ObservableObject {
             var failure: String?
             do {
                 guard let selected = await SelectionService.readSelectedText() else {
-                    throw FlowError(message: "Marker først den tekst du vil have behandlet, og prøv igen.")
+                    throw FlowError(message: """
+                    Kunne ikke læse markeret tekst.
+
+                    1. Har du markeret noget? Markér teksten og prøv igen.
+                    2. Har OmnitGram Accessibility-tilladelse? \
+                    System Settings → Privacy & Security → Accessibility → slå OmnitGram til, \
+                    og genstart appen.
+                    """)
                 }
                 let result = try await service.run(action, on: selected)
                 await MainActor.run {
