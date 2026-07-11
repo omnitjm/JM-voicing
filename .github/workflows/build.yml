@@ -53,6 +53,19 @@ jobs:
             "${{ steps.locate.outputs.app }}"
           codesign --verify --verbose=2 "${{ steps.locate.outputs.app }}"
 
+      - name: Smoke test - app launches and stays alive
+        run: |
+          set -euo pipefail
+          "${{ steps.locate.outputs.app }}/Contents/MacOS/OmnitGram" &
+          PID=$!
+          sleep 10
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "::error::OmnitGram.app died within 10s of launch"
+            exit 1
+          fi
+          echo "App alive after 10s - OK"
+          kill "$PID" || true
+
       - name: Zip
         run: |
           cd "$(dirname '${{ steps.locate.outputs.app }}')"
@@ -90,9 +103,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r windows/requirements.txt pyinstaller
 
+      - name: Run logic tests
+        run: python windows/test_omnitgram.py
+
       - name: Build OmnitGram.exe
         run: |
           pyinstaller --onefile --noconsole --name OmnitGram windows/omnitgram.py
+
+      - name: Smoke test - exe launches and stays alive
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist/OmnitGram.exe" -PassThru
+          Start-Sleep -Seconds 12
+          if ($p.HasExited) {
+            Write-Error "OmnitGram.exe exited within 12s of launch (exit code $($p.ExitCode))"
+            exit 1
+          }
+          Write-Output "Exe alive after 12s - OK"
+          Stop-Process -Id $p.Id -Force
 
       - name: Zip
         run: Compress-Archive -Path dist/OmnitGram.exe -DestinationPath OmnitGram-windows.zip
