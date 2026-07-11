@@ -54,12 +54,14 @@ enum SelectionService {
         let src = CGEventSource(stateID: .combinedSessionState)
         let cKey: CGKeyCode = 8
 
+        // Session-tap frem for HID-tap: injicerer i brugerens login-session,
+        // hvilket router mere pålideligt til den aktive app.
         let down = CGEvent(keyboardEventSource: src, virtualKey: cKey, keyDown: true)
         down?.flags = .maskCommand
-        down?.post(tap: .cghidEventTap)
+        down?.post(tap: .cgSessionEventTap)
 
         let up = CGEvent(keyboardEventSource: src, virtualKey: cKey, keyDown: false)
         up?.flags = .maskCommand
-        up?.post(tap: .cghidEventTap)
+        up?.post(tap: .cgSessionEventTap)
     }
 }

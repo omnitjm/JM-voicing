@@ -42,12 +42,14 @@ enum TextInserter {
         let src = CGEventSource(stateID: .combinedSessionState)
         let vKey: CGKeyCode = 9  // 'v'
 
+        // Session-tap frem for HID-tap: injicerer i brugerens login-session,
+        // hvilket router mere pålideligt til den aktive app.
         let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
         down?.flags = .maskCommand
-        down?.post(tap: .cghidEventTap)
+        down?.post(tap: .cgSessionEventTap)
 
         let up = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: false)
         up?.flags = .maskCommand
-        up?.post(tap: .cghidEventTap)
+        up?.post(tap: .cgSessionEventTap)
     }
 }
