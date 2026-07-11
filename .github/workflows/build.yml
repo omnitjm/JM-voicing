@@ -106,6 +106,9 @@ jobs:
       - name: Run logic tests
         run: python windows/test_omnitgram.py
 
+      - name: E2E test - real Ctrl+C/Ctrl+V through the OS against a live text field
+        run: python windows/e2e_clipboard_test.py
+
       - name: Build OmnitGram.exe
         run: |
           pyinstaller --onefile --noconsole --name OmnitGram windows/omnitgram.py
