@@ -33,6 +33,13 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Preview") {
+                Toggle("Vis ændringer før de indsættes", isOn: $store.showPreview)
+                Text("Til: et lille vindue viser hvad der fjernes (rødt) og tilføjes (grønt) - tryk Enter for at indsætte, Esc for at annullere. Fra: rettelsen indsættes med det samme.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Genveje") {
                 shortcutRow(
                     symbol: "checkmark.seal",

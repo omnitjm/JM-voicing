@@ -15,6 +15,7 @@ final class SelectionActionCoordinator: ObservableObject {
     @Published private(set) var state: State = .idle
 
     private let settingsStore: SettingsStore
+    private let preview = PreviewPanelController()
     private var busy = false  // læses/skrives kun på main
 
     init(settingsStore: SettingsStore) {
@@ -50,6 +51,7 @@ final class SelectionActionCoordinator: ObservableObject {
         busy = true
         state = .working
         let service = settingsStore.makeService()
+        let wantPreview = settingsStore.showPreview
 
         Task { [weak self] in
             var failure: String?
@@ -69,6 +71,18 @@ final class SelectionActionCoordinator: ObservableObject {
                     if result == selected {
                         // Allerede korrekt - diskret lyd, rør ikke ved teksten.
                         NSSound(named: "Tink")?.play()
+                    } else if wantPreview {
+                        let title = action == .fixGrammar ? "Grammatik-rettelser" : "Sprogforbedringer"
+                        self.preview.show(
+                            title: title,
+                            original: selected,
+                            corrected: result,
+                            onAccept: {
+                                TextInserter.insert(result)
+                                NSSound(named: "Pop")?.play()
+                            },
+                            onCancel: {}
+                        )
                     } else {
                         TextInserter.insert(result)
                         NSSound(named: "Pop")?.play()

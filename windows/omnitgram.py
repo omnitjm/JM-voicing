@@ -67,6 +67,7 @@ DEFAULT_CONFIG = {
     "model": "",  # tom = brug udbyderens default
     "hotkey_grammar": "ctrl+alt+g",
     "hotkey_improve": "ctrl+alt+o",
+    "show_preview": True,  # vis diff og kræv accept før indsættelse
     "api_key_fallback": "",  # kun brugt hvis keyring ikke virker
 }
 
@@ -207,6 +208,68 @@ def call_llm(cfg: dict, system_prompt: str, text: str) -> str:
 
 # ---------------------------------------------------------------- selection
 
+def tokenize_words(text: str) -> list[str]:
+    """Split i ord-tokens; whitespace kollapses, linjeskift bevares som '\\n'."""
+    tokens: list[str] = []
+    current = ""
+    for ch in text:
+        if ch == "\n":
+            if current:
+                tokens.append(current)
+                current = ""
+            tokens.append("\n")
+        elif ch.isspace():
+            if current:
+                tokens.append(current)
+                current = ""
+        else:
+            current += ch
+    if current:
+        tokens.append(current)
+    return tokens
+
+
+def diff_words(original: str, corrected: str) -> list[tuple[str, str]]:
+    """Ord-niveau diff. Returnerer [(op, tekst), ...] hvor op er
+    'equal', 'delete' eller 'insert'. Ren funktion - unit-testes."""
+    import difflib
+
+    a = tokenize_words(original)
+    b = tokenize_words(corrected)
+    out: list[tuple[str, str]] = []
+    for op, i1, i2, j1, j2 in difflib.SequenceMatcher(a=a, b=b, autojunk=False).get_opcodes():
+        if op == "equal":
+            out.append(("equal", " ".join(b[j1:j2])))
+        elif op == "delete":
+            out.append(("delete", " ".join(a[i1:i2])))
+        elif op == "insert":
+            out.append(("insert", " ".join(b[j1:j2])))
+        else:  # replace
+            out.append(("delete", " ".join(a[i1:i2])))
+            out.append(("insert", " ".join(b[j1:j2])))
+    return out
+
+
+def get_foreground_window() -> int | None:
+    """HWND for det aktive vindue (målappen) - bruges til at gendanne fokus
+    efter preview-vinduet, så Ctrl+V lander det rigtige sted."""
+    try:
+        import ctypes
+        return ctypes.windll.user32.GetForegroundWindow()
+    except Exception:
+        return None
+
+
+def restore_foreground(hwnd: int | None) -> None:
+    if not hwnd:
+        return
+    try:
+        import ctypes
+        ctypes.windll.user32.SetForegroundWindow(hwnd)
+    except Exception:
+        pass
+
+
 def release_modifiers() -> None:
     """Send key-up for evt. fysisk holdte modifiers, så vores simulerede
     Ctrl+C ikke bliver til fx Ctrl+Alt+C mens brugeren stadig holder genvejen."""
@@ -335,7 +398,9 @@ class OmnitGramApp:
         if self.busy:
             return
         self.busy = True
+        release_busy = True
         try:
+            target_hwnd = get_foreground_window()
             text = read_selection()
             if not text:
                 self.notify("Marker først den tekst du vil have behandlet.")
@@ -347,13 +412,85 @@ class OmnitGramApp:
                 beep_ok()  # allerede korrekt - rør ikke teksten
                 return
 
-            paste_text(result)
-            beep_ok()
+            if self.cfg.get("show_preview", True):
+                # Preview-vinduet overtager ansvaret for busy-flaget.
+                release_busy = False
+                self.root.after(0, lambda: self._show_preview(text, result, target_hwnd))
+            else:
+                paste_text(result)
+                beep_ok()
         except Exception as e:
             self.notify(str(e))
             beep_err()
         finally:
-            self.busy = False
+            if release_busy:
+                self.busy = False
+
+    # ------------------------------------------------------------ preview
+
+    def _show_preview(self, original: str, result: str, target_hwnd: int | None):
+        """Vis diff og kræv accept (Enter) før indsættelse. Kører på tk-tråden."""
+        win = tk.Toplevel(self.root)
+        win.title(f"{APP_NAME} - forhåndsvisning")
+        win.attributes("-topmost", True)
+        win.geometry("620x380")
+
+        header = ttk.Frame(win)
+        header.pack(fill="x", padx=12, pady=(10, 4))
+        ttk.Label(header, text="Ændringer:", font=("Segoe UI", 10, "bold")).pack(side="left")
+        ttk.Label(header, text="rød = fjernes · grøn = tilføjes",
+                  foreground="gray").pack(side="right")
+
+        body = tk.Text(win, wrap="word", font=("Segoe UI", 11),
+                       padx=10, pady=8, relief="flat")
+        body.pack(fill="both", expand=True, padx=12, pady=4)
+        body.tag_configure("delete", foreground="#c0392b",
+                           font=("Segoe UI", 11, "overstrike"))
+        body.tag_configure("insert", foreground="#1e8449",
+                           font=("Segoe UI", 11, "bold"))
+
+        first = True
+        for op, chunk in diff_words(original, result):
+            if not chunk:
+                continue
+            if not first and chunk != "\n":
+                body.insert("end", " ")
+            if op == "equal":
+                body.insert("end", chunk)
+            elif op == "delete":
+                body.insert("end", chunk, "delete")
+            else:
+                body.insert("end", chunk, "insert")
+            first = False
+        body.configure(state="disabled")
+
+        def finish(accepted: bool):
+            try:
+                win.destroy()
+            except Exception:
+                pass
+            if accepted:
+                def do_paste():
+                    restore_foreground(target_hwnd)
+                    time.sleep(0.3)
+                    paste_text(result)
+                    beep_ok()
+                    self.busy = False
+                threading.Thread(target=do_paste, daemon=True).start()
+            else:
+                self.busy = False
+
+        btns = ttk.Frame(win)
+        btns.pack(fill="x", padx=12, pady=(4, 10))
+        ttk.Label(btns, text="Enter = indsæt · Esc = annullér",
+                  foreground="gray").pack(side="left")
+        ttk.Button(btns, text="Indsæt", command=lambda: finish(True)).pack(side="right", padx=(8, 0))
+        ttk.Button(btns, text="Annullér", command=lambda: finish(False)).pack(side="right")
+
+        win.bind("<Return>", lambda e: finish(True))
+        win.bind("<Escape>", lambda e: finish(False))
+        win.protocol("WM_DELETE_WINDOW", lambda: finish(False))
+        win.focus_force()
 
     # ------------------------------------------------------------ tray
 
@@ -405,7 +542,7 @@ class OmnitGramApp:
     def _open_settings_window(self):
         win = tk.Toplevel(self.root)
         win.title(f"{APP_NAME} - Indstillinger")
-        win.geometry("480x430")
+        win.geometry("480x470")
         win.resizable(False, False)
         win.attributes("-topmost", True)
 
@@ -471,12 +608,18 @@ class OmnitGramApp:
         grammar_var = hotkey_row("Ret grammatik", self.cfg["hotkey_grammar"])
         improve_var = hotkey_row("Optimér sprog", self.cfg["hotkey_improve"])
 
+        # --- Preview ---
+        preview_var = tk.BooleanVar(value=self.cfg.get("show_preview", True))
+        ttk.Checkbutton(win, text="Vis ændringer før de indsættes (Enter = indsæt, Esc = annullér)",
+                        variable=preview_var).pack(anchor="w", **pad)
+
         # --- Gem ---
         def save():
             self.cfg["provider"] = provider_var.get()
             self.cfg["model"] = model_var.get().strip()
             self.cfg["hotkey_grammar"] = grammar_var.get().strip()
             self.cfg["hotkey_improve"] = improve_var.get().strip()
+            self.cfg["show_preview"] = bool(preview_var.get())
             set_api_key(self.cfg, key_var.get())
             save_config(self.cfg)
             self.register_hotkeys()

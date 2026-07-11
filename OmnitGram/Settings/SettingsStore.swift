@@ -34,6 +34,13 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    // MARK: Preview
+
+    /// Vis diff-preview og kræv accept før teksten erstattes.
+    @Published var showPreview: Bool {
+        didSet { defaults.set(showPreview, forKey: Keys.showPreview) }
+    }
+
     // MARK: Genveje
 
     /// nil = genvejen er slået fra.
@@ -53,6 +60,8 @@ final class SettingsStore: ObservableObject {
         self.provider = prov
         self.apiKey = Self.loadKeychain(service: "com.omnit.omnitgram", account: prov.rawValue) ?? ""
         self.model = defaults.string(forKey: Keys.modelPrefix + prov.rawValue) ?? prov.defaultModel
+
+        self.showPreview = defaults.object(forKey: Keys.showPreview) as? Bool ?? true
 
         self.grammarShortcut = Self.loadShortcut(key: Keys.grammarShortcut,
                                                  fallback: .defaultGrammar,
@@ -81,6 +90,7 @@ final class SettingsStore: ObservableObject {
     private enum Keys {
         static let provider        = "llmProvider"
         static let modelPrefix     = "llmModel_"
+        static let showPreview     = "showPreview"
         static let grammarShortcut = "grammarShortcut"
         static let improveShortcut = "improveShortcut"
         static let disabledMarker  = "__disabled__"

@@ -11,6 +11,8 @@ Grammarly til **Mac og Windows** - men med din egen LLM-nøgle og uden abonnemen
 
 Virker på **dansk og engelsk** (sproget detekteres automatisk - dansk forbliver dansk, engelsk forbliver engelsk). Du vælger selv LLM-udbyder: **Anthropic (Claude)** eller **OpenAI (GPT)** med din egen API-nøgle.
 
+**Preview før indsættelse:** Som standard vises et lille vindue med ændringerne farvemarkeret (rødt = fjernes, grønt = tilføjes) - tryk **Enter** for at indsætte eller **Esc** for at annullere. Kan slås fra i Indstillinger hvis du hellere vil have rettelsen indsat direkte.
+
 ---
 
 ## Installér på Mac (2 minutter)

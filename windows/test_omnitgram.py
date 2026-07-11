@@ -213,5 +213,42 @@ class ClipboardFlowTests(unittest.TestCase):
         self.assertEqual(state["clip"], "gammelt indhold")  # gendannet bagefter
 
 
+class DiffTests(unittest.TestCase):
+    def test_identical_text_is_all_equal(self):
+        out = og.diff_words("hej med dig", "hej med dig")
+        self.assertEqual(out, [("equal", "hej med dig")])
+
+    def test_single_word_replacement(self):
+        out = og.diff_words("jeg have en hund", "jeg har en hund")
+        self.assertIn(("delete", "have"), out)
+        self.assertIn(("insert", "har"), out)
+        ops = [op for op, _ in out]
+        self.assertEqual(ops.count("delete"), 1)
+        self.assertEqual(ops.count("insert"), 1)
+
+    def test_insertion_only(self):
+        out = og.diff_words("hund er sjov", "min hund er sjov")
+        self.assertIn(("insert", "min"), out)
+        self.assertNotIn("delete", [op for op, _ in out])
+
+    def test_deletion_only(self):
+        out = og.diff_words("det er meget helt fint", "det er helt fint")
+        self.assertIn(("delete", "meget"), out)
+        self.assertNotIn("insert", [op for op, _ in out])
+
+    def test_newlines_preserved_as_tokens(self):
+        out = og.diff_words("linje et\nlinje to", "linje et\nlinje to")
+        joined = " ".join(chunk for _, chunk in out)
+        self.assertIn("\n", joined)
+
+    def test_reconstruction_of_corrected_text(self):
+        # equal + insert-dele skal tilsammen udgøre den rettede tekst (ordvis).
+        original = "jeg have en hund og den er sjove"
+        corrected = "jeg har en hund og den er sjov"
+        out = og.diff_words(original, corrected)
+        rebuilt = " ".join(chunk for op, chunk in out if op in ("equal", "insert") and chunk)
+        self.assertEqual(rebuilt.split(), corrected.split())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
