@@ -157,6 +157,9 @@ jobs:
       - name: E2E test - real Ctrl+C/Ctrl+V through the OS against a live text field
         run: python windows/e2e_clipboard_test.py
 
+      - name: E2E test - preview window accepts via real Enter keypress
+        run: python windows/e2e_preview_test.py
+
       - name: Build OmnitGram.exe
         run: |
           pyinstaller --onefile --noconsole --name OmnitGram windows/omnitgram.py
