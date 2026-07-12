@@ -54,6 +54,7 @@ final class SelectionActionCoordinator: ObservableObject {
         let wantPreview = settingsStore.showPreview
 
         Task { [weak self] in
+            guard let self else { return }
             var failure: String?
             do {
                 guard let selected = await SelectionService.readSelectedText() else {
@@ -94,7 +95,6 @@ final class SelectionActionCoordinator: ObservableObject {
 
             let message = failure
             await MainActor.run {
-                guard let self else { return }
                 self.busy = false
                 self.state = .idle
                 if let message {
