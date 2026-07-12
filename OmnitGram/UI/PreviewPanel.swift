@@ -75,7 +75,10 @@ struct PreviewView: View {
 
 /// Viser previewet som et flydende non-activating panel, så host-appen
 /// beholder fokus og markering - dermed lander ⌘V det rigtige sted bagefter.
-@MainActor
+///
+/// Ikke @MainActor-annoteret (samme mønster som SelectionActionCoordinator):
+/// alle kald sker fra main-tråden ved konstruktion - show() fra koordinatorens
+/// MainActor.run, dismiss() fra SwiftUI-knappernes actions.
 final class PreviewPanelController {
     private var panel: NSPanel?
 
